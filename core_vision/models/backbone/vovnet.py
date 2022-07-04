@@ -2,9 +2,10 @@ from typing import List
 
 import tensorflow as tf
 from loguru import logger
-from src.models.layers.common_layers import conv_bn_relu
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Concatenate, Input, MaxPool2D
+
+from core_vision.models.layers.common_layers import conv_bn_relu
 
 
 def osa_module(

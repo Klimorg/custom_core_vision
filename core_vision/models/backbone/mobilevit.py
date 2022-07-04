@@ -2,7 +2,6 @@ from typing import Any, Dict, List
 
 import tensorflow as tf
 from loguru import logger
-from src.models.layers.common_layers import InvertedResidualBottleneck2D
 from tensorflow.keras import Model
 from tensorflow.keras.activations import swish
 from tensorflow.keras.layers import (
@@ -14,6 +13,8 @@ from tensorflow.keras.layers import (
     MultiHeadAttention,
     Reshape,
 )
+
+from core_vision.models.layers.common_layers import InvertedResidualBottleneck2D
 
 
 @tf.keras.utils.register_keras_serializable()

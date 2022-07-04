@@ -5,14 +5,11 @@ from tensorflow.keras.layers import (
     Add,
     BatchNormalization,
     Conv2D,
-    Dense,
-    Flatten,
-    GlobalAveragePooling2D,
     Layer,
     MaxPool2D,
     ReLU,
 )
-from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.models import Model
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -23,7 +20,7 @@ class ResNetBlock(Layer):
         downsample: bool = False,
         l2_regul: float = 1e-4,
         *args,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.filters = filters
@@ -92,3 +89,47 @@ class ResNetBlock(Layer):
     @classmethod
     def from_config(cls, config) -> None:
         return cls(**config)
+
+
+class ResNet18(Model):
+    def __init__(self, **kwargs):
+        """
+        num_classes: number of classes in specific classification task.
+        """
+        super().__init__(**kwargs)
+        self.conv1 = Conv2D(
+            filters=64,
+            kernel_size=(7, 7),
+            strides=2,
+            padding="same",
+            kernel_initializer="he_normal",
+        )
+        self.init_bn = BatchNormalization()
+        self.pool = MaxPool2D(pool_size=(2, 2), strides=2, padding="same")
+        self.res11 = ResNetBlock(filters=64)
+        self.res12 = ResNetBlock(filters=64)
+        self.res21 = ResNetBlock(filters=128, downsample=True)
+        self.res22 = ResNetBlock(filters=128)
+        self.res31 = ResNetBlock(filters=256, downsample=True)
+        self.res32 = ResNetBlock(filters=256)
+        self.res41 = ResNetBlock(filters=512, downsample=True)
+        self.res42 = ResNetBlock(filters=512)
+
+    def call(self, inputs):
+        out = self.conv1(inputs)
+        out = self.init_bn(out)
+        out = tf.nn.relu(out)
+        out = self.pool(out)
+        for res_block in [
+            self.res11,
+            self.res12,
+            self.res21,
+            self.res22,
+            self.res31,
+            self.res32,
+            self.res41,
+            self.res42,
+        ]:
+            out = res_block(out)
+
+        return out

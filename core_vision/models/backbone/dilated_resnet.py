@@ -2,9 +2,10 @@ from typing import List
 
 import tensorflow as tf
 from loguru import logger
-from src.models.layers.common_layers import bn_relu_conv, residual_bottleneck
 from tensorflow.keras.layers import Input, MaxPooling2D
 from tensorflow.keras.models import Model
+
+from core_vision.models.layers.common_layers import bn_relu_conv, residual_bottleneck
 
 
 def get_feature_extractor(
