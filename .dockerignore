@@ -1,0 +1,18 @@
+#misc
+*.md
+*.tar
+#*.dvc
+*.sh
+
+#folders
+datas*
+mlruns*
+hydra*
+core*
+Dockerfile*
+
+#git dvc versioning control system
+.dvc
+.git
+.vscode
+.ipynb_checkpoints
