@@ -2,10 +2,16 @@ import numpy as np
 from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
+from pytest import fixture
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
 from core_vision.models.backbone.resnet18 import ResNet18, ResNetBlock
+
+
+@fixture
+def fmap():
+    return np.random.rand(1, 224, 224, 3)
 
 
 def test_constructor():
@@ -19,16 +25,16 @@ def test_constructor():
     assert isinstance(model, Model)
 
 
-@given(
-    arrays(
-        dtype=np.float32,
-        elements=st.floats(0, 1, width=32),
-        shape=[1, 224, 224, 3],
-    ),
-)
-def test_compute(strat):
+# @given(
+#     arrays(
+#         dtype=np.float32,
+#         elements=st.floats(0, 1, width=32),
+#         shape=[1, 224, 224, 3],
+#     ),
+# )
+def test_compute(fmap):
     model = ResNet18()
-    out = model(strat)
+    out = model(fmap)
 
     assert out.shape.as_list() == [1, 7, 7, 512]
 
