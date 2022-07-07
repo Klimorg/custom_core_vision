@@ -85,7 +85,7 @@ class ResNetBlock(Layer):
         return config
 
     @classmethod
-    def from_config(cls, config) -> None:
+    def from_config(cls, config):
         return cls(**config)
 
 

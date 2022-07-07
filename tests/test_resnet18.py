@@ -6,7 +6,7 @@ from pytest import fixture
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
-from core_vision.models.backbone.resnet18 import ResNet18, ResNetBlock
+from core_vision.models.resnet18 import ResNet18, ResNetBlock
 
 
 @fixture

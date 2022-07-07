@@ -24,7 +24,6 @@ class ClassificationHead(Layer):
         self.act = Activation("softmax")
 
     def build(self, input_shape) -> None:
-        batch_size, width, height, channels = input_shape
         self.global_avg = GlobalAveragePooling2D()
         self.dense1 = Dense(
             units=self.units,
@@ -57,5 +56,5 @@ class ClassificationHead(Layer):
         return config
 
     @classmethod
-    def from_config(cls, config) -> None:
+    def from_config(cls, config):
         return cls(**config)
