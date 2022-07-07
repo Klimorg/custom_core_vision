@@ -5,7 +5,7 @@ from hypothesis.extra.numpy import arrays
 from pytest import fixture
 from tensorflow.keras.layers import Layer
 
-from core_vision.layers.classification_layer import ClassificationHead
+from core_vision.heads.classification_head import ClassificationHead
 
 
 @fixture
