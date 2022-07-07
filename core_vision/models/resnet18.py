@@ -1,14 +1,7 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import tensorflow as tf
-from tensorflow.keras.layers import (
-    Add,
-    BatchNormalization,
-    Conv2D,
-    Layer,
-    MaxPool2D,
-    ReLU,
-)
+from tensorflow.keras.layers import Add, BatchNormalization, Conv2D, Layer, ReLU
 from tensorflow.keras.models import Model
 
 

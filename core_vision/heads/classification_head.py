@@ -2,7 +2,6 @@ from typing import Any, Dict
 
 import tensorflow as tf
 from tensorflow.keras.layers import Activation, Dense, GlobalAveragePooling2D, Layer
-from tensorflow.keras.models import Model
 
 
 @tf.keras.utils.register_keras_serializable()
