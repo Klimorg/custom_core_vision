@@ -5,7 +5,7 @@
 from pathlib import Path
 
 # import setuptools
-from setuptools import setup
+from setuptools import find_packages, setup
 
 BASE_DIR = Path(__file__).parent
 
@@ -23,15 +23,15 @@ with open(Path(BASE_DIR, "requirements-doc.txt"), "r") as req_doc:
 
 
 setup(
-    name="core-vision",
-    version="1.1",
+    name="core_vision",
+    version="0.1",
     license="",
     description="installation du projet",
     author="MKL",
     author_email="klimczak.mathieu@pm.me",
     url="",
-    # package_dir={"": "src"},
-    # packages=setuptools.find_packages(where="src"),
+    package_dir={"core_vision": "core_vision"},
+    packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[required_packages],
     extras_require={

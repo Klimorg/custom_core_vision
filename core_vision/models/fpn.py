@@ -1,6 +1,10 @@
-from src.models.layers.feature_pyramids import FeaturePyramidNetwork, SemanticHeadFPN
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Activation, Conv2D, UpSampling2D
+
+from core_vision.models.layers.feature_pyramids import (
+    FeaturePyramidNetwork,
+    SemanticHeadFPN,
+)
 
 
 def get_segmentation_module(

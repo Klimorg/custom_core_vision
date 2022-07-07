@@ -1,5 +1,5 @@
-from hypothesis import given
-from hypothesis import strategies as st
+# from hypothesis import given
+# from hypothesis import strategies as st
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
@@ -15,3 +15,7 @@ def test_constructor():
     assert isinstance(layer1, Layer)
     assert isinstance(layer2, Layer)
     assert isinstance(model, Model)
+
+
+class BaseModelTesting:
+    pass

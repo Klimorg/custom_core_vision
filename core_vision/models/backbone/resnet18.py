@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import tensorflow as tf
 from tensorflow.keras.layers import (
@@ -92,11 +92,13 @@ class ResNetBlock(Layer):
 
 
 class ResNet18(Model):
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         num_classes: number of classes in specific classification task.
         """
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
+        # self.image_shape = image_shape
+
         self.conv1 = Conv2D(
             filters=64,
             kernel_size=(7, 7),
@@ -104,16 +106,29 @@ class ResNet18(Model):
             padding="same",
             kernel_initializer="he_normal",
         )
+
         self.init_bn = BatchNormalization()
         self.pool = MaxPool2D(pool_size=(2, 2), strides=2, padding="same")
-        self.res11 = ResNetBlock(filters=64)
-        self.res12 = ResNetBlock(filters=64)
-        self.res21 = ResNetBlock(filters=128, downsample=True)
-        self.res22 = ResNetBlock(filters=128)
-        self.res31 = ResNetBlock(filters=256, downsample=True)
-        self.res32 = ResNetBlock(filters=256)
-        self.res41 = ResNetBlock(filters=512, downsample=True)
-        self.res42 = ResNetBlock(filters=512)
+        self.res11 = ResNetBlock(filters=64, name="resnet_block1_layer1")
+        self.res12 = ResNetBlock(filters=64, name="resnet_block1_layer2")
+        self.res21 = ResNetBlock(
+            filters=128,
+            downsample=True,
+            name="resnet_block2_layer1",
+        )
+        self.res22 = ResNetBlock(filters=128, name="resnet_block2_layer2")
+        self.res31 = ResNetBlock(
+            filters=256,
+            downsample=True,
+            name="resnet_block3_layer1",
+        )
+        self.res32 = ResNetBlock(filters=256, name="resnet_block3_layer2")
+        self.res41 = ResNetBlock(
+            filters=512,
+            downsample=True,
+            name="resnet_block4_layer1",
+        )
+        self.res42 = ResNetBlock(filters=512, name="resnet_block4_layer2")
 
     def call(self, inputs):
         out = self.conv1(inputs)

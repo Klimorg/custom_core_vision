@@ -1,7 +1,8 @@
-from src.models.layers.common_layers import conv_bn_relu
-from src.models.layers.shared_kernels import KSAConv2D
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Activation, Concatenate, Conv2D, UpSampling2D
+
+from core_vision.models.layers.common_layers import conv_bn_relu
+from core_vision.models.layers.shared_kernels import KSAConv2D
 
 
 def decoder(fmap1, fmap2, filters):
