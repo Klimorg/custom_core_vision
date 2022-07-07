@@ -4,9 +4,9 @@ import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Concatenate, Conv2D, UpSampling2D
 
-from core_vision.models.layers.aspp import ASPP
-from core_vision.models.layers.common_layers import conv_gn_relu
-from core_vision.models.layers.joint_pyramid_upsampling import JointPyramidUpsampling
+from core_vision.layers.aspp import ASPP
+from core_vision.layers.common_layers import conv_gn_relu
+from core_vision.layers.joint_pyramid_upsampling import JointPyramidUpsampling
 
 
 def upsampling(

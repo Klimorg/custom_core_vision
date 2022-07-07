@@ -1,13 +1,7 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import tensorflow as tf
-from tensorflow.keras.layers import (
-    Activation,
-    BatchNormalization,
-    Dense,
-    GlobalAveragePooling2D,
-    Layer,
-)
+from tensorflow.keras.layers import Activation, Dense, GlobalAveragePooling2D, Layer
 from tensorflow.keras.models import Model
 
 
@@ -16,6 +10,13 @@ class ClassificationHead(Layer):
     def __init__(
         self, units: int, num_classes: int, l2_regul: float = 1e-4, *args, **kwargs
     ) -> None:
+        """_summary_
+
+        Args:
+            units (int): _description_
+            num_classes (int): _description_
+            l2_regul (float, optional): _description_. Defaults to 1e-4.
+        """
         super().__init__(*args, **kwargs)
         self.units = units
         self.num_classes = num_classes

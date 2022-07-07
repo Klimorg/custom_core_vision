@@ -1,5 +1,7 @@
-# from hypothesis import given
-# from hypothesis import strategies as st
+import numpy as np
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra.numpy import arrays
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
@@ -17,5 +19,19 @@ def test_constructor():
     assert isinstance(model, Model)
 
 
-class BaseModelTesting:
-    pass
+@given(
+    arrays(
+        dtype=np.float32,
+        elements=st.floats(0, 1, width=32),
+        shape=[1, 224, 224, 3],
+    ),
+)
+def test_compute(strat):
+    model = ResNet18()
+    out = model(strat)
+
+    assert out.shape.as_list() == [1, 7, 7, 512]
+
+
+# class BaseModelTesting:
+#     pass

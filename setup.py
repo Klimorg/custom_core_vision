@@ -17,6 +17,9 @@ with open(Path(BASE_DIR, "requirements.txt"), "r") as req:
 with open(Path(BASE_DIR, "requirements-dev.txt"), "r") as req_dev:
     dev_packages = [ln.strip() for ln in req_dev.readlines()]
 
+with open(Path(BASE_DIR, "requirements-test.txt"), "r") as req_test:
+    test_packages = [ln.strip() for ln in req_test.readlines()]
+
 # Load packages from requirements-doc.txt
 with open(Path(BASE_DIR, "requirements-doc.txt"), "r") as req_doc:
     doc_packages = [ln.strip() for ln in req_doc.readlines()]
@@ -35,7 +38,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[required_packages],
     extras_require={
-        "dev": [dev_packages] + [doc_packages],
+        "dev": [dev_packages] + [test_packages] + [doc_packages],
         "docs": [doc_packages],
     },
 )

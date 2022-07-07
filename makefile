@@ -62,12 +62,13 @@ install-docs:
 # Cleaning
 .PHONY: clean
 clean:
-	bash shell/clean_pycache.sh ../template_segmentation
 	find . -type f -name "*.DS_Store" -ls -delete
 	find . | grep -E "(__pycache__|\.pyc|\.pyo)" | xargs rm -rf
 	find . | grep -E ".pytest_cache" | xargs rm -rf
+	find . | grep -E ".hypothesis" | xargs rm -rf
 	find . | grep -E ".mypy_cache" | xargs rm -rf
 	find . | grep -E ".ipynb_checkpoints" | xargs rm -rf
+	find . | grep -E "*.egg-info" | xargs rm -rf
 	find . | grep -E "htmlcov/*" | xargs rm -rf
 	rm -f .coverage
 

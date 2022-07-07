@@ -29,11 +29,16 @@ class ResNetBlock(Layer):
 
         self.act = ReLU()
 
+        if downsample:
+            self.strides = 2
+        else:
+            self.strides = 1
+
     def build(self, input_shape) -> None:
 
         self.conv1 = Conv2D(
             filters=self.filters,
-            strides=2,
+            strides=self.strides,
             kernel_size=3,
             padding="same",
             use_bias=True,
@@ -108,21 +113,29 @@ class ResNet18(Model):
         )
 
         self.init_bn = BatchNormalization()
-        self.pool = MaxPool2D(pool_size=(2, 2), strides=2, padding="same")
-        self.res11 = ResNetBlock(filters=64, name="resnet_block1_layer1")
+        # self.pool = MaxPool2D(pool_size=(2, 2), strides=2, padding="same")
+
+        self.res11 = ResNetBlock(
+            filters=64,
+            downsample=True,
+            name="resnet_block1_layer1",
+        )
         self.res12 = ResNetBlock(filters=64, name="resnet_block1_layer2")
+
         self.res21 = ResNetBlock(
             filters=128,
             downsample=True,
             name="resnet_block2_layer1",
         )
         self.res22 = ResNetBlock(filters=128, name="resnet_block2_layer2")
+
         self.res31 = ResNetBlock(
             filters=256,
             downsample=True,
             name="resnet_block3_layer1",
         )
         self.res32 = ResNetBlock(filters=256, name="resnet_block3_layer2")
+
         self.res41 = ResNetBlock(
             filters=512,
             downsample=True,
@@ -134,7 +147,7 @@ class ResNet18(Model):
         out = self.conv1(inputs)
         out = self.init_bn(out)
         out = tf.nn.relu(out)
-        out = self.pool(out)
+        # out = self.pool(out)
         for res_block in [
             self.res11,
             self.res12,
