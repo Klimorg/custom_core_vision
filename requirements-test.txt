@@ -1,8 +1,8 @@
 bandit==1.7.4
 hypothesis==6.48.3
 # unit tests
-pytest==7.1.1
+pytest==7.1.2
 pytest-cov==3.0.0
-pytest-github-actions-annotate-failures==0.1.6
+pytest-github-actions-annotate-failures==0.1.7
 pytest-xdist==2.5.0
-safety==1.10.3
+safety==2.0.0
