@@ -253,6 +253,88 @@ class BNConvReLU(Layer):
         return cls(**config)
 
 
+@tf.keras.utils.register_keras_serializable()
+class SepConvBNReLU(Layer):
+    def __init__(
+        self,
+        filters: int,
+        kernel_size: int,
+        padding: str = "same",
+        strides: int = 1,
+        dilation_rate: int = 1,
+        w_init: str = "he_normal",
+        l2_regul: float = 1e-4,
+        *args,
+        **kwargs,
+    ) -> None:
+
+        """_summary_
+
+        Args:
+            filters (int): Number of filters used in the `Conv2D` layer.
+            kernel_size (int): Size of the convolution kernels used in the `Conv2D` layer.
+            padding (str, optional): Padding parameter of the `Conv2D` layer. Defaults to "same".
+            strides (int, optional): Strides parameter of the `Conv2D` layer. Defaults to 1.
+            dilation_rate (int, optional): Dilation rate of the `Conv2D` layer. Defaults to 1.
+            w_init (str, optional): Kernel initialization method used in th `Conv2D` layer. Defaults to "he_normal".
+            l2_regul (float, optional): Value of the constraint used for the
+                $L_2$ regularization. Defaults to 1e-4.
+
+        Returns:
+            Output feature map, size = $(H,W,C)$.
+        super().__init__(*args,**kwargs)
+        """
+        super().__init__(*args, **kwargs)
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.strides = strides
+        self.dilation_rate = dilation_rate
+        self.w_init = w_init
+        self.l2_regul = l2_regul
+
+        self.act = ReLU()
+
+    def build(self, input_shape) -> None:
+        self.sepconv = SeparableConv2D(
+            filters=self.filters,
+            depth_multiplier=1,
+            kernel_size=self.kernel_size,
+            padding=self.padding,
+            strides=self.strides,
+            dilation_rate=self.dilation_rate,
+            depthwise_initializer=self.w_init,
+            kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+            use_bias=False,
+        )
+
+        self.bn = BatchNormalization()
+
+    def call(self, inputs, training=None) -> tf.Tensor:
+        fmap = self.sepconv(inputs)
+        fmap = self.bn(fmap)
+        return self.act(fmap)
+
+    def get_config(self) -> Dict[str, Any]:
+        config = super().get_config()
+        config.update(
+            {
+                "filters": self.filters,
+                "kernel_size": self.kernel_size,
+                "padding": self.padding,
+                "strides": self.strides,
+                "dilation_rate": self.dilation_rate,
+                "w_init": self.w_init,
+                "l2_regul": self.l2_regul,
+            },
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config) -> None:
+        return cls(**config)
+
+
 def sepconv_bn_relu(
     tensor: tf.Tensor,
     filters: int,
