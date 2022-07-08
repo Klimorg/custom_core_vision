@@ -7,15 +7,15 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def test_backbone(self):
+    def test_backbone(self, fmap):
         pass
 
     @abstractmethod
-    def test_classification_model(self):
+    def test_classification_model(self, fmap):
         pass
 
     @abstractmethod
-    def test_segmentation_model(self):
+    def test_segmentation_model(self, fmap):
         pass
 
 
@@ -25,7 +25,7 @@ class BaseLayer(ABC):
         pass
 
     @abstractmethod
-    def test_layer(self):
+    def test_layer(self, fmap):
         pass
 
     @abstractmethod

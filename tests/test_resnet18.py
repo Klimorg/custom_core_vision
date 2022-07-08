@@ -10,7 +10,7 @@ from tensorflow.keras.models import Model
 from core_vision.classification_model import ClassificationModel
 from core_vision.heads.classification_head import ClassificationHead
 from core_vision.models.resnet18 import ResNet18, ResNetBlock
-from tests.utils import BaseModel
+from tests.utils import BaseLayer, BaseModel
 
 
 @fixture
@@ -18,22 +18,32 @@ def fmap():
     return np.random.rand(1, 224, 224, 3)
 
 
-def test_layer_constructor():
+class TestLayer(BaseLayer):
+    def test_layer_constructor(self):
+        layer1 = ResNetBlock(filters=3, downsample=False)
+        layer2 = ResNetBlock(filters=32, downsample=True)
 
-    layer1 = ResNetBlock(filters=32, downsample=False)
-    layer2 = ResNetBlock(filters=32, downsample=True)
+        assert isinstance(layer1, Layer)
+        assert isinstance(layer2, Layer)
 
-    assert isinstance(layer1, Layer)
-    assert isinstance(layer2, Layer)
+    def test_layer(self, fmap):
+        layer1 = ResNetBlock(filters=3, downsample=False)
+        layer2 = ResNetBlock(filters=32, downsample=True)
+
+        out1 = layer1(fmap)
+        out2 = layer2(fmap)
+
+        assert out1.shape.as_list() == [1, 224, 224, 3]
+        assert out2.shape.as_list() == [1, 112, 112, 32]
+
+    def test_config(self):
+        pass
 
 
 class TestResNet18(BaseModel):
-    def __init__(self):
-        self.model = ResNet18()
-
     def test_model_constructor(self):
-
-        assert isinstance(self.model, Model)
+        model = ResNet18()
+        assert isinstance(model, Model)
 
     # @given(
     #     arrays(
@@ -43,19 +53,19 @@ class TestResNet18(BaseModel):
     #     ),
     # )
     def test_backbone(self, fmap):
-
-        out = self.model(fmap)
+        model = ResNet18()
+        out = model(fmap)
 
         assert out.shape.as_list() == [1, 7, 7, 512]
 
     def test_classification_model(self, fmap):
-
+        model = ResNet18()
         head = ClassificationHead(units=32, num_classes=10)
 
         model = ClassificationModel(
-            backbone=self.model,
+            backbone=model,
             classification_head=head,
-            name=f"{self.model.name}_classification",
+            name=f"{model.name}_classification",
         )
 
         out = model(fmap)
