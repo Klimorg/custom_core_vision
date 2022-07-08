@@ -1,12 +1,16 @@
 import numpy as np
-from hypothesis import given
-from hypothesis import strategies as st
-from hypothesis.extra.numpy import arrays
+
+# from hypothesis import given
+# from hypothesis import strategies as st
+# from hypothesis.extra.numpy import arrays
 from pytest import fixture
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
+from core_vision.classification_model import ClassificationModel
+from core_vision.heads.classification_head import ClassificationHead
 from core_vision.models.resnet18 import ResNet18, ResNetBlock
+from tests.utils import BaseModel
 
 
 @fixture
@@ -23,25 +27,41 @@ def test_layer_constructor():
     assert isinstance(layer2, Layer)
 
 
-def test_model_constructor():
+class TestResNet18(BaseModel):
+    def __init__(self):
+        self.model = ResNet18()
 
-    model = ResNet18()
-    assert isinstance(model, Model)
+    def test_model_constructor(self):
 
+        assert isinstance(self.model, Model)
 
-# @given(
-#     arrays(
-#         dtype=np.float32,
-#         elements=st.floats(0, 1, width=32),
-#         shape=[1, 224, 224, 3],
-#     ),
-# )
-def test_compute(fmap):
-    model = ResNet18()
-    out = model(fmap)
+    # @given(
+    #     arrays(
+    #         dtype=np.float32,
+    #         elements=st.floats(0, 1, width=32),
+    #         shape=[1, 224, 224, 3],
+    #     ),
+    # )
+    def test_backbone(self, fmap):
 
-    assert out.shape.as_list() == [1, 7, 7, 512]
+        out = self.model(fmap)
 
+        assert out.shape.as_list() == [1, 7, 7, 512]
 
-# class BaseModelTesting:
-#     pass
+    def test_classification_model(self, fmap):
+
+        head = ClassificationHead(units=32, num_classes=10)
+
+        model = ClassificationModel(
+            backbone=self.model,
+            classification_head=head,
+            name=f"{self.model.name}_classification",
+        )
+
+        out = model(fmap)
+
+        assert isinstance(model, Model)
+        assert out.shape.as_list()[1] == 10
+
+    def test_segmentation_model(self):
+        pass
