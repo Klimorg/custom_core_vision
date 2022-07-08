@@ -84,7 +84,7 @@ class ConvNextBlock(Layer):
         return config
 
     @classmethod
-    def from_config(cls, config) -> None:
+    def from_config(cls, config):
         return cls(**config)
 
 
@@ -119,156 +119,248 @@ class ConvNeXtLayer(Layer):
         return config
 
     @classmethod
-    def from_config(cls, config) -> None:
+    def from_config(cls, config):
         return cls(**config)
 
 
-def get_feature_extractor(
-    img_shape: List[int],
-    filters: List[int],
-    num_blocks: List[int],
-) -> Model:
-    """Instantiate a ConvNeXt model.
-    Returns:
-        A `tf.keras` model.
-    """
+class ConvNext(Model):
+    def __init__(
+        self,
+        filters: List[int],
+        num_blocks: List[int],
+        name: str,
+        *args,
+        **kwargs,
+    ) -> None:
 
-    # Input block
-    img_input = Input(img_shape)
+        super().__init__(name=name, *args, **kwargs)
 
-    fmap = Conv2D(
-        filters=filters[0],
-        kernel_size=4,
-        strides=4,
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
-        name="stem",
-    )(img_input)
-    fmap = LayerNormalization(name="stem_layer_norm")(fmap)
+        conv_config = {
+            "padding": "same",
+            "use_bias": True,
+            "kernel_initializer": "he_uniform",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=1e-4),
+        }
 
-    fmap = ConvNeXtLayer(
-        filters=filters[0],
-        num_blocks=num_blocks[0],
-        name="convnext_layer_1",
-    )(fmap)
-    fmap = LayerNormalization(name="downsample_1_layer_norm")(fmap)
-    fmap = Conv2D(
-        filters=filters[1],
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
-        name="downsample_1",
-    )(fmap)
+        self.stem = Conv2D(
+            filters=filters[0],
+            kernel_size=4,
+            strides=4,
+            **conv_config,
+            name="stem",
+        )
+        self.stem_ln = LayerNormalization(name="stem_layer_norm")
 
-    fmap = ConvNeXtLayer(
-        filters=filters[1],
-        num_blocks=num_blocks[1],
-        name="convnext_layer_2",
-    )(fmap)
-    fmap = LayerNormalization(name="downsample_2_layer_norm")(fmap)
-    fmap = Conv2D(
-        filters=filters[2],
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
-        name="downsample_2",
-    )(fmap)
+        self.convnext_l1 = ConvNeXtLayer(
+            filters=filters[0],
+            num_blocks=num_blocks[0],
+            name="convnext_layer_1",
+        )
+        self.ln_l1 = LayerNormalization(name="downsample_1_layer_norm")
+        self.down_l1 = Conv2D(
+            filters=filters[1],
+            kernel_size=2,
+            strides=2,
+            **conv_config,
+            name="downsample_1",
+        )
 
-    fmap = ConvNeXtLayer(
-        filters=filters[2],
-        num_blocks=num_blocks[2],
-        name="convnext_layer_3",
-    )(fmap)
-    fmap = LayerNormalization(name="downsample_3_layer_norm")(fmap)
-    fmap = Conv2D(
-        filters=filters[3],
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
-        name="downsample_3",
-    )(fmap)
+        self.convnext_l2 = ConvNeXtLayer(
+            filters=filters[1],
+            num_blocks=num_blocks[1],
+            name="convnext_layer_2",
+        )
+        self.ln_l2 = LayerNormalization(name="downsample_2_layer_norm")
+        self.down_l2 = Conv2D(
+            filters=filters[2],
+            kernel_size=2,
+            strides=2,
+            **conv_config,
+            name="downsample_2",
+        )
 
-    fmap = ConvNeXtLayer(
-        filters=filters[3],
-        num_blocks=num_blocks[3],
-        name="convnext_layer_4",
-    )(fmap)
+        self.convnext_l3 = ConvNeXtLayer(
+            filters=filters[2],
+            num_blocks=num_blocks[2],
+            name="convnext_layer_3",
+        )
+        self.ln_l3 = LayerNormalization(name="downsample_3_layer_norm")
+        self.down_l3 = Conv2D(
+            filters=filters[3],
+            kernel_size=2,
+            strides=2,
+            **conv_config,
+            name="downsample_3",
+        )
 
-    return Model(img_input, fmap)
+        self.convnext_l4 = ConvNeXtLayer(
+            filters=filters[3],
+            num_blocks=num_blocks[3],
+            name="convnext_layer_4",
+        )
 
+    def call(self, inputs) -> tf.Tensor:
 
-def get_backbone(
-    img_shape: List[int],
-    filters: List[int],
-    num_blocks: List[int],
-    backbone_name: str,
-) -> Model:
-    """Instantiate the model and use it as a backbone (feature extractor) for a semantic segmentation task.
+        fmap = self.stem(inputs)
 
-    Args:
-        img_shape (List[int]): Input shape of the images in the dataset.
-        expansion_rate (List[int]): Expansion rates used in `InvertedResidualBottleneck2D` and in `Transformer` modules.
-        filters (List[int]): Number of filters used in `InvertedResidualBottleneck2D` and in `MobileVit2D` modules.
-        emb_dim (List[int]): The dimension of the embedding, ie the number of units in the linear projection for the `MultiHeadAttention` module.
-        repetitions (List[int]): Number of `Transformer` blocks in the `MobileVit2D` modules.
-        num_heads (int): Number of heads for the `MultiHeadAttention` module.
-        backbone_name (str): The name of the backbone.
+        fmap = self.convnext_l1(fmap)
+        fmap = self.ln_l1(fmap)
+        fmap = self.down_l1(fmap)
 
-    Returns:
-        A `tf.keras` model.
-    """
+        fmap = self.convnext_l2(fmap)
+        fmap = self.ln_l2(fmap)
+        fmap = self.down_l2(fmap)
 
-    backbone = get_feature_extractor(
-        img_shape=img_shape,
-        filters=filters,
-        num_blocks=num_blocks,
-    )
+        fmap = self.convnext_l3(fmap)
+        fmap = self.ln_l3(fmap)
+        fmap = self.down_l3(fmap)
 
-    endpoint_layers = [
-        "convnext_layer_1",
-        "convnext_layer_2",
-        "convnext_layer_3",
-        "convnext_layer_4",
-    ]
+        return self.convnext_l4(fmap)
 
-    os4_output, os8_output, os16_output, os32_output = [
-        backbone.get_layer(layer_name).output for layer_name in endpoint_layers
-    ]
+    # def get_feature_extractor(
+    #     img_shape: List[int],
+    #     filters: List[int],
+    #     num_blocks: List[int],
+    # ) -> Model:
+    #     """Instantiate a ConvNeXt model.
+    #     Returns:
+    #         A `tf.keras` model.
+    #     """
 
-    height = img_shape[1]
-    logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
-    logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")
-    logger.info(f"os16_output OS : {int(height/os16_output.shape.as_list()[1])}")
-    logger.info(f"os32_output OS : {int(height/os32_output.shape.as_list()[1])}")
+    #     # Input block
+    #     img_input = Input(img_shape)
 
-    return Model(
-        inputs=[backbone.input],
-        outputs=[os4_output, os8_output, os16_output, os32_output],
-        name=backbone_name,
-    )
+    #     fmap = Conv2D(
+    #         filters=filters[0],
+    #         kernel_size=4,
+    #         strides=4,
+    #         padding="same",
+    #         use_bias=False,
+    #         kernel_initializer="he_uniform",
+    #         kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
+    #         name="stem",
+    #     )(img_input)
+    #     fmap = LayerNormalization(name="stem_layer_norm")(fmap)
 
+    #     fmap = ConvNeXtLayer(
+    #         filters=filters[0],
+    #         num_blocks=num_blocks[0],
+    #         name="convnext_layer_1",
+    #     )(fmap)
+    #     fmap = LayerNormalization(name="downsample_1_layer_norm")(fmap)
+    #     fmap = Conv2D(
+    #         filters=filters[1],
+    #         kernel_size=2,
+    #         strides=2,
+    #         padding="same",
+    #         use_bias=False,
+    #         kernel_initializer="he_uniform",
+    #         kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
+    #         name="downsample_1",
+    #     )(fmap)
 
-if __name__ == "__main__":
+    #     fmap = ConvNeXtLayer(
+    #         filters=filters[1],
+    #         num_blocks=num_blocks[1],
+    #         name="convnext_layer_2",
+    #     )(fmap)
+    #     fmap = LayerNormalization(name="downsample_2_layer_norm")(fmap)
+    #     fmap = Conv2D(
+    #         filters=filters[2],
+    #         kernel_size=2,
+    #         strides=2,
+    #         padding="same",
+    #         use_bias=False,
+    #         kernel_initializer="he_uniform",
+    #         kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
+    #         name="downsample_2",
+    #     )(fmap)
 
-    filters = [256, 512, 1024, 2048]
-    num_blocks = [3, 3, 27, 3]
+    #     fmap = ConvNeXtLayer(
+    #         filters=filters[2],
+    #         num_blocks=num_blocks[2],
+    #         name="convnext_layer_3",
+    #     )(fmap)
+    #     fmap = LayerNormalization(name="downsample_3_layer_norm")(fmap)
+    #     fmap = Conv2D(
+    #         filters=filters[3],
+    #         kernel_size=2,
+    #         strides=2,
+    #         padding="same",
+    #         use_bias=False,
+    #         kernel_initializer="he_uniform",
+    #         kernel_regularizer=tf.keras.regularizers.l2(l2=1e-4),
+    #         name="downsample_3",
+    #     )(fmap)
 
-    model = get_backbone(
-        img_shape=[224, 224, 3],
-        filters=filters,
-        num_blocks=num_blocks,
-        backbone_name="convnext",
-    )
+    #     fmap = ConvNeXtLayer(
+    #         filters=filters[3],
+    #         num_blocks=num_blocks[3],
+    #         name="convnext_layer_4",
+    #     )(fmap)
 
-    model.summary()
+    #     return Model(img_input, fmap)
+
+    # def get_backbone(
+    #     img_shape: List[int],
+    #     filters: List[int],
+    #     num_blocks: List[int],
+    #     backbone_name: str,
+    # ) -> Model:
+    #     """Instantiate the model and use it as a backbone (feature extractor) for a semantic segmentation task.
+
+    #     Args:
+    #         img_shape (List[int]): Input shape of the images in the dataset.
+    #         expansion_rate (List[int]): Expansion rates used in `InvertedResidualBottleneck2D` and in `Transformer` modules.
+    #         filters (List[int]): Number of filters used in `InvertedResidualBottleneck2D` and in `MobileVit2D` modules.
+    #         emb_dim (List[int]): The dimension of the embedding, ie the number of units in the linear projection for the `MultiHeadAttention` module.
+    #         repetitions (List[int]): Number of `Transformer` blocks in the `MobileVit2D` modules.
+    #         num_heads (int): Number of heads for the `MultiHeadAttention` module.
+    #         backbone_name (str): The name of the backbone.
+
+    #     Returns:
+    #         A `tf.keras` model.
+    #     """
+
+    #     backbone = get_feature_extractor(
+    #         img_shape=img_shape,
+    #         filters=filters,
+    #         num_blocks=num_blocks,
+    #     )
+
+    #     endpoint_layers = [
+    #         "convnext_layer_1",
+    #         "convnext_layer_2",
+    #         "convnext_layer_3",
+    #         "convnext_layer_4",
+    #     ]
+
+    #     os4_output, os8_output, os16_output, os32_output = [
+    #         backbone.get_layer(layer_name).output for layer_name in endpoint_layers
+    #     ]
+
+    #     height = img_shape[1]
+    #     logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
+    #     logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")
+    #     logger.info(f"os16_output OS : {int(height/os16_output.shape.as_list()[1])}")
+    #     logger.info(f"os32_output OS : {int(height/os32_output.shape.as_list()[1])}")
+
+    #     return Model(
+    #         inputs=[backbone.input],
+    #         outputs=[os4_output, os8_output, os16_output, os32_output],
+    #         name=backbone_name,
+    #     )
+
+    # if __name__ == "__main__":
+
+    # filters = [256, 512, 1024, 2048]
+    # num_blocks = [3, 3, 27, 3]
+
+    # model = get_backbone(
+    #     img_shape=[224, 224, 3],
+    #     filters=filters,
+    #     num_blocks=num_blocks,
+    #     backbone_name="convnext",
+    # )
+
+    # model.summary()

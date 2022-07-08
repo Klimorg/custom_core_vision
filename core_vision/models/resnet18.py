@@ -29,24 +29,25 @@ class ResNetBlock(Layer):
 
     def build(self, input_shape) -> None:
 
+        conv_config = {
+            "padding": "same",
+            "use_bias": True,
+            "kernel_initializer": "he_uniform",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
+        }
+
         self.conv1 = Conv2D(
             filters=self.filters,
             strides=self.strides,
             kernel_size=3,
-            padding="same",
-            use_bias=True,
-            kernel_initializer="he_uniform",
-            kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+            **conv_config,
         )
         self.bn1 = BatchNormalization()
         self.conv2 = Conv2D(
             filters=self.filters,
             strides=1,
             kernel_size=3,
-            padding="same",
-            use_bias=True,
-            kernel_initializer="he_uniform",
-            kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+            **conv_config,
         )
         self.bn2 = BatchNormalization()
 
@@ -55,9 +56,7 @@ class ResNetBlock(Layer):
                 self.filters,
                 strides=2,
                 kernel_size=1,
-                kernel_initializer="he_uniform",
-                padding="same",
-                kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                **conv_config,
             )
             self.res_bn = BatchNormalization()
 
@@ -94,8 +93,7 @@ class ResNet18(Model):
         """
         num_classes: number of classes in specific classification task.
         """
-        super().__init__(*args, **kwargs)
-        # self.image_shape = image_shape
+        super().__init__(name="resnet18", *args, **kwargs)
 
         self.conv1 = Conv2D(
             filters=64,
@@ -106,7 +104,6 @@ class ResNet18(Model):
         )
 
         self.init_bn = BatchNormalization()
-        # self.pool = MaxPool2D(pool_size=(2, 2), strides=2, padding="same")
 
         self.res11 = ResNetBlock(
             filters=64,
@@ -140,8 +137,7 @@ class ResNet18(Model):
         out = self.conv1(inputs)
         out = self.init_bn(out)
         out = tf.nn.relu(out)
-        # out = self.pool(out)
-        for res_block in [
+        for res_block in (
             self.res11,
             self.res12,
             self.res21,
@@ -150,7 +146,7 @@ class ResNet18(Model):
             self.res32,
             self.res41,
             self.res42,
-        ]:
+        ):
             out = res_block(out)
 
         return out

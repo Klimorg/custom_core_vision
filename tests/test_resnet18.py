@@ -14,14 +14,18 @@ def fmap():
     return np.random.rand(1, 224, 224, 3)
 
 
-def test_constructor():
+def test_layer_constructor():
 
     layer1 = ResNetBlock(filters=32, downsample=False)
     layer2 = ResNetBlock(filters=32, downsample=True)
-    model = ResNet18()
 
     assert isinstance(layer1, Layer)
     assert isinstance(layer2, Layer)
+
+
+def test_model_constructor():
+
+    model = ResNet18()
     assert isinstance(model, Model)
 
 
