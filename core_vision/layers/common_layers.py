@@ -335,51 +335,6 @@ class SepConvBNReLU(Layer):
         return cls(**config)
 
 
-def sepconv_bn_relu(
-    tensor: tf.Tensor,
-    filters: int,
-    kernel_size: int,
-    padding: str = "same",
-    strides: int = 1,
-    dilation_rate: int = 1,
-    w_init: str = "he_normal",
-    l2_regul: float = 1e-4,
-) -> tf.Tensor:
-    """
-    SeparableConv2D - BatchNormalization - ReLU module.
-
-    Args:
-        tensor (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
-        filters (int): Number of filters used in the `SeparableConv2D` layer.
-        kernel_size (int): Size of the convolution kernels used in the `SeparableConv2D` layer.
-        padding (str, optional): Padding parameter of the `SeparableConv2D` layer. Defaults to "same".
-        strides (int, optional): Strides parameter of the `SeparableConv2D` layer. Defaults to 1.
-        dilation_rate (int, optional): Dilation rate of the `SeparableConv2D` layer. Defaults to 1.
-        w_init (str, optional): Kernel initialization method used in th `SeparableConv2D` layer. Defaults to "he_normal".
-        l2_regul (float, optional): Value of the constraint used for the
-            $L_2$ regularization. Defaults to 1e-4.
-
-    Returns:
-        Output feature map, size = $(H,W,C)$.
-    """
-
-    fmap = SeparableConv2D(
-        filters=filters,
-        depth_multiplier=1,
-        kernel_size=kernel_size,
-        padding=padding,
-        strides=strides,
-        dilation_rate=dilation_rate,
-        depthwise_initializer=w_init,
-        kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
-        use_bias=False,
-    )(tensor)
-
-    fmap = BatchNormalization()(fmap)
-
-    return ReLU()(fmap)
-
-
 @tf.keras.utils.register_keras_serializable()
 class InvertedResidualBottleneck2D(Layer):
     def __init__(
@@ -473,6 +428,51 @@ class InvertedResidualBottleneck2D(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+
+# def sepconv_bn_relu(
+#     tensor: tf.Tensor,
+#     filters: int,
+#     kernel_size: int,
+#     padding: str = "same",
+#     strides: int = 1,
+#     dilation_rate: int = 1,
+#     w_init: str = "he_normal",
+#     l2_regul: float = 1e-4,
+# ) -> tf.Tensor:
+#     """
+#     SeparableConv2D - BatchNormalization - ReLU module.
+
+#     Args:
+#         tensor (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
+#         filters (int): Number of filters used in the `SeparableConv2D` layer.
+#         kernel_size (int): Size of the convolution kernels used in the `SeparableConv2D` layer.
+#         padding (str, optional): Padding parameter of the `SeparableConv2D` layer. Defaults to "same".
+#         strides (int, optional): Strides parameter of the `SeparableConv2D` layer. Defaults to 1.
+#         dilation_rate (int, optional): Dilation rate of the `SeparableConv2D` layer. Defaults to 1.
+#         w_init (str, optional): Kernel initialization method used in th `SeparableConv2D` layer. Defaults to "he_normal".
+#         l2_regul (float, optional): Value of the constraint used for the
+#             $L_2$ regularization. Defaults to 1e-4.
+
+#     Returns:
+#         Output feature map, size = $(H,W,C)$.
+#     """
+
+#     fmap = SeparableConv2D(
+#         filters=filters,
+#         depth_multiplier=1,
+#         kernel_size=kernel_size,
+#         padding=padding,
+#         strides=strides,
+#         dilation_rate=dilation_rate,
+#         depthwise_initializer=w_init,
+#         kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+#         use_bias=False,
+#     )(tensor)
+
+#     fmap = BatchNormalization()(fmap)
+
+#     return ReLU()(fmap)
 
 
 # def conv_gn_relu(

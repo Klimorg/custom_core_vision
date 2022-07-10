@@ -99,7 +99,7 @@ class FeaturePyramidNetwork(Layer):
         )
         self.upsample = UpSampling2D(size=(2, 2), interpolation="bilinear")
 
-    def call(self, inputs, training=None) -> List[tf.Tensor]:
+    def call(self, inputs: List[tf.Tensor], training=None) -> List[tf.Tensor]:
 
         c2_output, c3_output, c4_output, c5_output = inputs
         p2_output = self.conv1(c2_output)
@@ -306,7 +306,7 @@ class SemanticHeadFPN(Layer):
         self.upsample = UpSampling2D(size=(2, 2), interpolation="bilinear")
         self.concat = Concatenate(axis=-1)
 
-    def call(self, inputs, training=None) -> tf.Tensor:
+    def call(self, inputs: List[tf.Tensor], training=None) -> tf.Tensor:
 
         p2_output, p3_output, p4_output, p5_output = inputs
 
