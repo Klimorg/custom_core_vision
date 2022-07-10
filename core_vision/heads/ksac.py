@@ -1,7 +1,7 @@
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Activation, Concatenate, Conv2D, UpSampling2D
 
-from core_vision.layers.common_layers import conv_bn_relu
+from core_vision.layers.common_layers import ConvBNReLU
 from core_vision.layers.shared_kernels import KSAConv2D
 
 
@@ -19,11 +19,11 @@ def decoder(fmap1, fmap2, filters):
 
     fmap1 = UpSampling2D(size=(4, 4), interpolation="bilinear")(fmap1)
 
-    fmap2 = conv_bn_relu(tensor=fmap2, filters=filters, kernel_size=1, name="decoder1")
+    fmap2 = ConvBNReLU(filters=filters, kernel_size=1, name="decoder1")(fmap2)
 
     fmap = Concatenate(axis=-1)([fmap1, fmap2])
 
-    return conv_bn_relu(tensor=fmap, filters=filters, kernel_size=3, name="decoder2")
+    return ConvBNReLU(filters=filters, kernel_size=3, name="decoder2")(fmap)
 
 
 def get_segmentation_module(

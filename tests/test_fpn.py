@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import numpy as np
 import pytest
 from tensorflow.keras.layers import Layer
@@ -60,4 +62,7 @@ class TestSemanticFPN(BaseLayer):
         assert out.shape.as_list() == [1, 56, 56, 512]
 
     def test_config(self):
-        pass
+        layer = SemanticHeadFPN()
+
+        config = layer.get_config()
+        assert isinstance(config, Dict)
