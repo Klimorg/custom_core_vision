@@ -59,27 +59,27 @@ tests:
 # Reporting
 .PHONY: mypy
 mypy:
-	mypy --show-error-codes src/
+	mypy --show-error-codes core_vision/
 
 .PHONY: cc_report
 cc_report:
-	radon cc src/
+	radon cc core_vision/
 
 .PHONY: raw_report
 raw_report:
-	radon raw --summary src/
+	radon raw --summary core_vision/
 
 .PHONY: mi_report
 mi_report:
-	radon mi src/
+	radon mi core_vision/
 
 .PHONY: hal_report
 hal_report:
-	radon hal src/
+	radon hal core_vision/
 
 .PHONY: bandit
 bandit:
-	bandit -r src/
+	bandit -r core_vision/
 
 
 # Precommit
