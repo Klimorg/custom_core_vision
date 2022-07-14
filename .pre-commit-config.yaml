@@ -12,6 +12,7 @@ repos:
       - id: mixed-line-ending # replaces or checks mixed line ending.
       - id: requirements-txt-fixer # sorts entries in requirements.txt.
       - id: trailing-whitespace # trims trailing whitespace.
+      - id: check-toml # checks toml files for parseable syntax.
 
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v2.2.3
@@ -40,6 +41,11 @@ repos:
     hooks:
       - id: check-github-actions
       - id: check-github-workflows
+
+  # - repo: github.com/macisamuele/language-formatters-pre-commit-hooks
+  #   rev: ${LATEST_SHA_OR_VERSION}
+  #   hooks:
+  #     - id: pretty-format-toml
 
   # - repo: https://github.com/hadolint/hadolint
   #   rev: v2.10.0
