@@ -24,6 +24,7 @@ install:
 .PHONY: install-dev
 install-dev:
 	python -m pip install -e ".[dev]" --no-cache-dir
+	python -m pip install -e ".[test]" --no-cache-dir
 	pre-commit install
 	pre-commit autoupdate
 
