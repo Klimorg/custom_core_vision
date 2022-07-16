@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Dict
+
+from tensorflow.keras.layers import Layer
 
 
 class BaseModel(ABC):
@@ -29,5 +32,7 @@ class BaseLayer(ABC):
         pass
 
     @abstractmethod
-    def test_config(self):
-        pass
+    def test_config(self, layer: Layer):
+        cfg = layer.get_config()
+
+        assert isinstance(cfg, Dict)

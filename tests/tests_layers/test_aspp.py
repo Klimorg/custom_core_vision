@@ -25,4 +25,5 @@ class TestASPP(BaseLayer):
         assert out.shape.as_list() == [1, 224, 224, 32]
 
     def test_config(self):
-        pass
+        layer = ASPP(filters=32)
+        return super().test_config(layer)
