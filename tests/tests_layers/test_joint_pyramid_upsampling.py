@@ -35,4 +35,5 @@ class TestJPU(BaseLayer):
         assert out.shape.as_list() == [1, 28, 28, 256]
 
     def test_config(self):
-        pass
+        layer = JointPyramidUpsampling()
+        return super().test_config(layer)

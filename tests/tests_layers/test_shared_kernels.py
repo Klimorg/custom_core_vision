@@ -76,4 +76,5 @@ class TestKSAConv2D(BaseLayer):
         assert (out.numpy() >= 0).all()
 
     def test_config(self):
-        pass
+        layer = KSAConv2D(filters=128)
+        return super().test_config(layer)

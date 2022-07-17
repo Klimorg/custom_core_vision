@@ -25,6 +25,7 @@ install:
 install-dev:
 	python -m pip install -e ".[dev]" --no-cache-dir
 	python -m pip install -e ".[test]" --no-cache-dir
+	python -m pip install -e ".[doc]" --no-cache-dir
 	pre-commit install
 	pre-commit autoupdate
 
@@ -56,7 +57,6 @@ docs:
 .PHONY: tests
 tests:
 	python -m pytest -v --cov
-
 # Reporting
 .PHONY: mypy
 mypy:

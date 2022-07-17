@@ -45,7 +45,8 @@ class TestFPN(BaseLayer):
         assert out[3].shape.as_list() == [1, 7, 7, 256]
 
     def test_config(self):
-        pass
+        layer = FeaturePyramidNetwork()
+        return super().test_config(layer)
 
 
 class TestSemanticFPN(BaseLayer):
@@ -64,5 +65,4 @@ class TestSemanticFPN(BaseLayer):
     def test_config(self):
         layer = SemanticHeadFPN()
 
-        config = layer.get_config()
-        assert isinstance(config, Dict)
+        return super().test_config(layer)

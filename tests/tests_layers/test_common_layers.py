@@ -32,7 +32,8 @@ class TestConvGNReLU(BaseLayer):
         assert (out.numpy() >= 0).all()
 
     def test_config(self):
-        pass
+        layer = ConvGNReLU(filters=32, kernel_size=3)
+        return super().test_config(layer)
 
 
 class TestConvBNReLU(BaseLayer):
@@ -50,7 +51,8 @@ class TestConvBNReLU(BaseLayer):
         assert (out.numpy() >= 0).all()
 
     def test_config(self):
-        pass
+        layer = ConvBNReLU(filters=32, kernel_size=3)
+        return super().test_config(layer)
 
 
 class TestBNConvReLU(BaseLayer):
@@ -68,7 +70,8 @@ class TestBNConvReLU(BaseLayer):
         assert (out.numpy() >= 0).all()
 
     def test_config(self):
-        pass
+        layer = BNConvReLU(filters=32, kernel_size=3)
+        return super().test_config(layer)
 
 
 class TestSepConvBNReLU(BaseLayer):
