@@ -32,7 +32,7 @@ class TestFPN(BaseLayer):
     def test_layer_constructor(self):
         layer = FeaturePyramidNetwork()
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap4, fmap8, fmap16, fmap32):
         layer = FeaturePyramidNetwork()
@@ -46,14 +46,14 @@ class TestFPN(BaseLayer):
 
     def test_config(self):
         layer = FeaturePyramidNetwork()
-        return super().test_config(layer)
+        super().test_config(layer)
 
 
 class TestSemanticFPN(BaseLayer):
     def test_layer_constructor(self):
         layer = SemanticHeadFPN()
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap4, fmap8, fmap16, fmap32):
         layer = SemanticHeadFPN()
@@ -65,4 +65,4 @@ class TestSemanticFPN(BaseLayer):
     def test_config(self):
         layer = SemanticHeadFPN()
 
-        return super().test_config(layer)
+        super().test_config(layer)

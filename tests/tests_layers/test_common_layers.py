@@ -21,7 +21,7 @@ class TestConvGNReLU(BaseLayer):
     def test_layer_constructor(self):
         layer = ConvGNReLU(filters=32, kernel_size=3)
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = ConvGNReLU(filters=32, kernel_size=3)
@@ -33,14 +33,14 @@ class TestConvGNReLU(BaseLayer):
 
     def test_config(self):
         layer = ConvGNReLU(filters=32, kernel_size=3)
-        return super().test_config(layer)
+        super().test_config(layer)
 
 
 class TestConvBNReLU(BaseLayer):
     def test_layer_constructor(self):
         layer = ConvBNReLU(filters=32, kernel_size=3)
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = ConvBNReLU(filters=32, kernel_size=3)
@@ -52,14 +52,14 @@ class TestConvBNReLU(BaseLayer):
 
     def test_config(self):
         layer = ConvBNReLU(filters=32, kernel_size=3)
-        return super().test_config(layer)
+        super().test_config(layer)
 
 
 class TestBNConvReLU(BaseLayer):
     def test_layer_constructor(self):
         layer = BNConvReLU(filters=32, kernel_size=3)
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = BNConvReLU(filters=32, kernel_size=3)
@@ -71,14 +71,13 @@ class TestBNConvReLU(BaseLayer):
 
     def test_config(self):
         layer = BNConvReLU(filters=32, kernel_size=3)
-        return super().test_config(layer)
+        super().test_config(layer)
 
 
 class TestSepConvBNReLU(BaseLayer):
     def test_layer_constructor(self):
         layer = SepConvBNReLU(filters=32, kernel_size=3)
-
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = SepConvBNReLU(filters=32, kernel_size=3)
@@ -89,7 +88,8 @@ class TestSepConvBNReLU(BaseLayer):
         assert (out.numpy() >= 0).all()
 
     def test_config(self):
-        pass
+        layer = SepConvBNReLU(filters=32, kernel_size=3)
+        super().test_config(layer)
 
 
 class TestInvertedResidualBottleneck2D(BaseLayer):
@@ -107,8 +107,8 @@ class TestInvertedResidualBottleneck2D(BaseLayer):
             skip_connection=False,
         )
 
-        assert isinstance(layer1, Layer)
-        assert isinstance(layer2, Layer)
+        super().test_layer_constructor(layer1)
+        super().test_layer_constructor(layer2)
 
     def test_layer(self, fmap):
         layer1 = InvertedResidualBottleneck2D(
@@ -131,4 +131,18 @@ class TestInvertedResidualBottleneck2D(BaseLayer):
         assert out2.shape.as_list() == [1, 112, 112, 32]
 
     def test_config(self):
-        pass
+        layer1 = InvertedResidualBottleneck2D(
+            expansion_rate=2,
+            filters=3,
+            strides=1,
+            skip_connection=True,
+        )
+        layer2 = InvertedResidualBottleneck2D(
+            expansion_rate=2,
+            filters=32,
+            strides=2,
+            skip_connection=False,
+        )
+
+        super().test_config(layer1)
+        super().test_config(layer2)

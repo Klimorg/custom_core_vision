@@ -23,8 +23,8 @@ class TestLayer(BaseLayer):
         layer1 = ResNetBlock(filters=3, downsample=False)
         layer2 = ResNetBlock(filters=32, downsample=True)
 
-        assert isinstance(layer1, Layer)
-        assert isinstance(layer2, Layer)
+        super().test_layer_constructor(layer1)
+        super().test_layer_constructor(layer2)
 
     def test_layer(self, fmap):
         layer1 = ResNetBlock(filters=3, downsample=False)
@@ -37,13 +37,17 @@ class TestLayer(BaseLayer):
         assert out2.shape.as_list() == [1, 112, 112, 32]
 
     def test_config(self):
-        pass
+        layer1 = ResNetBlock(filters=3, downsample=False)
+        layer2 = ResNetBlock(filters=32, downsample=True)
+
+        super().test_config(layer1)
+        super().test_config(layer2)
 
 
 class TestResNet18(BaseModel):
     def test_model_constructor(self):
         model = ResNet18()
-        assert isinstance(model, Model)
+        super().test_model_constructor(model)
 
     # @given(
     #     arrays(

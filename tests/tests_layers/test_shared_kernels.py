@@ -41,7 +41,7 @@ class TestSharedDilatedConv(BaseLayer):
             use_bias=False,
         )
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = SharedDilatedConv(
@@ -58,14 +58,22 @@ class TestSharedDilatedConv(BaseLayer):
         assert (out.numpy() >= 0).all()
 
     def test_config(self):
-        pass
+        layer = SharedDilatedConv(
+            filters=128,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            kernel_initializer="he_uniform",
+            use_bias=False,
+        )
+
+        super().test_config(layer)
 
 
 class TestKSAConv2D(BaseLayer):
     def test_layer_constructor(self):
         layer = KSAConv2D(filters=128)
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = KSAConv2D(filters=128)
@@ -77,4 +85,4 @@ class TestKSAConv2D(BaseLayer):
 
     def test_config(self):
         layer = KSAConv2D(filters=128)
-        return super().test_config(layer)
+        super().test_config(layer)

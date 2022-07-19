@@ -15,7 +15,7 @@ class TestASPP(BaseLayer):
     def test_layer_constructor(self):
         layer = ASPP(filters=32)
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap):
         layer = ASPP(filters=32)
@@ -26,4 +26,4 @@ class TestASPP(BaseLayer):
 
     def test_config(self):
         layer = ASPP(filters=32)
-        return super().test_config(layer)
+        super().test_config(layer)

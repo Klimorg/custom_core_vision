@@ -25,7 +25,7 @@ class TestJPU(BaseLayer):
     def test_layer_constructor(self):
         layer = JointPyramidUpsampling()
 
-        assert isinstance(layer, Layer)
+        super().test_layer_constructor(layer)
 
     def test_layer(self, fmap8, fmap16, fmap32):
         layer = JointPyramidUpsampling()
@@ -36,4 +36,4 @@ class TestJPU(BaseLayer):
 
     def test_config(self):
         layer = JointPyramidUpsampling()
-        return super().test_config(layer)
+        super().test_config(layer)
