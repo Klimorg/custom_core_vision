@@ -325,15 +325,22 @@ class ASPP_OC(Layer):
 
         self.concat = Concatenate(axis=-1)
 
+    def build(self, input_shape) -> None:
+
+        _, height, width, *_ = input_shape
+        conv_config = {
+            "padding": "same",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
+            "kernel_initializer": "he_uniform",
+            "use_bias": True,
+        }
+
         self.conv1 = Sequential(
             [
                 Conv2D(
-                    filters=filters,
+                    filters=self.filters,
                     kernel_size=(1, 1),
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -342,13 +349,10 @@ class ASPP_OC(Layer):
         self.conv2 = Sequential(
             [
                 Conv2D(
-                    filters=filters,
+                    filters=self.filters,
                     kernel_size=(3, 3),
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
                     dilation_rate=self.dilation_rate[0],
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -357,13 +361,10 @@ class ASPP_OC(Layer):
         self.conv3 = Sequential(
             [
                 Conv2D(
-                    filters=filters,
+                    filters=self.filters,
                     kernel_size=(3, 3),
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
                     dilation_rate=self.dilation_rate[1],
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -372,13 +373,10 @@ class ASPP_OC(Layer):
         self.conv4 = Sequential(
             [
                 Conv2D(
-                    filters=filters,
+                    filters=self.filters,
                     kernel_size=(3, 3),
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
                     dilation_rate=self.dilation_rate[2],
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -388,13 +386,10 @@ class ASPP_OC(Layer):
         self.conv5 = Sequential(
             [
                 Conv2D(
-                    filters=filters,
+                    filters=self.filters,
                     kernel_size=(1, 1),
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
                     dilation_rate=1,
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -404,22 +399,16 @@ class ASPP_OC(Layer):
         self.conv6 = Sequential(
             [
                 Conv2D(
-                    filters=filters,
+                    filters=self.filters,
                     kernel_size=(1, 1),
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
                     dilation_rate=1,
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
             ],
         )
 
-    def build(self, input_shape) -> None:
-
-        _, height, width, *_ = input_shape
         self.pooling = AveragePooling2D(pool_size=(height, width))
         self.upsample = UpSampling2D(size=(height, width), interpolation="bilinear")
 
