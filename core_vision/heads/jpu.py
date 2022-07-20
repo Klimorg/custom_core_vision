@@ -1,12 +1,52 @@
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 import tensorflow as tf
-from tensorflow.keras import Model
 from tensorflow.keras.layers import Concatenate, Conv2D, UpSampling2D
+from tensorflow.keras.models import Model, Sequential
 
 from core_vision.layers.aspp import ASPP
-from core_vision.layers.common_layers import conv_gn_relu
+from core_vision.layers.common_layers import ConvGNReLU, conv_gn_relu
 from core_vision.layers.joint_pyramid_upsampling import JointPyramidUpsampling
+
+
+@tf.keras.utils.register_keras_serializable()
+class JPU(Layer):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(name="JPU", *args, **kwargs)
+        pass
+
+    def build(self, input_shape) -> None:
+        batch_size, width, height, channels = input_shape
+
+        self.decoder = Sequential(
+            [
+                Conv2D(
+                    filters=filters,
+                    kernel_size=(3, 3),
+                    padding="same",
+                    use_bias=False,
+                    kernel_initializer="he_uniform",
+                    dilation_rate=self.dilation_rate[0],
+                    kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+                ),
+                BatchNormalization(),
+                ReLU(),
+            ],
+        )
+
+    def call(self, inputs, training=None) -> tf.Tensor:
+        os8_output, os16_output, os32_output = inputs
+
+    def get_config(self) -> Dict[str, Any]:
+        config = super().get_config()
+        config.update(
+            {},
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 def upsampling(
@@ -85,15 +125,15 @@ def get_segmentation_module(
 
     img_height, img_width = img_shape[:2]
 
-    endpoints = backbone.outputs
+    os4_output, os8_output, os16_output, os32_output = backbone.outputs
 
     # JPU Module
-    fmap = JointPyramidUpsampling()(endpoints[1:])
+    fmap = JointPyramidUpsampling()([os8_output, os16_output, os32_output])
 
     # ASPP Head
     fmap = ASPP(filters=128)(fmap)
 
-    fmap = decoder(fmap, endpoints[0], img_height, img_width, 128)
+    fmap = decoder(fmap, os4_output, img_height, img_width, 128)
 
     fmap = Conv2D(
         n_classes,

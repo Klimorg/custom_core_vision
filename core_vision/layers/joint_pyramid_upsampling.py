@@ -208,13 +208,13 @@ class JointPyramidUpsampling(Layer):
             ],
         )
 
-    def call(self, inputs, training=None) -> tf.Tensor:
+    def call(self, inputs: List[tf.Tensor], training=None) -> tf.Tensor:
 
-        c3_output, c4_output, c5_output = inputs
+        os8_output, os16_output, os32_output = inputs
 
-        fmap3 = self.conv1(c3_output)
-        fmap4 = self.upsample(self.conv2(c4_output))
-        fmap5 = self.upsample4(self.conv3(c5_output))
+        fmap3 = self.conv1(os8_output)
+        fmap4 = self.upsample(self.conv2(os16_output))
+        fmap5 = self.upsample4(self.conv3(os32_output))
 
         fmap1 = self.concat([fmap3, fmap4, fmap5])
 

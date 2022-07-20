@@ -16,7 +16,7 @@ class ClassificationHead(Layer):
             num_classes (int): _description_
             l2_regul (float, optional): _description_. Defaults to 1e-4.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(name="Classification-head", *args, **kwargs)
         self.units = units
         self.num_classes = num_classes
         self.l2_regul = l2_regul
