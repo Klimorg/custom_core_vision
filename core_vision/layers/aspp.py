@@ -150,7 +150,7 @@ class ASPP(Layer):
         self.pooling = AveragePooling2D(pool_size=(height, width))
         self.upsample = UpSampling2D(size=(height, width), interpolation="bilinear")
 
-    def call(self, inputs, training=None) -> tf.Tensor:
+    def call(self, inputs: tf.Tensor, training=None) -> tf.Tensor:
 
         fmap1 = self.conv1(inputs)
 

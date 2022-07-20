@@ -22,7 +22,7 @@ install:
 	python -m pip install -e . --no-cache-dir
 
 .PHONY: install-dev
-install-dev:
+install-dev: install
 	python -m pip install -e ".[dev]" --no-cache-dir
 	python -m pip install -e ".[test]" --no-cache-dir
 	python -m pip install -e ".[doc]" --no-cache-dir

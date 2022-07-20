@@ -9,10 +9,11 @@ from core_vision.layers.feature_pyramids import FeaturePyramidNetwork, SemanticH
 
 @tf.keras.utils.register_keras_serializable()
 class FPN(Layer):
-    def __init__(self, n_classes: int, *args, **kwargs) -> None:
+    def __init__(self, n_classes: int, l2_regul: float = 1e-4, *args, **kwargs) -> None:
         super().__init__(name="FPN", *args, **kwargs)
 
         self.n_classes = n_classes
+        self.l2_regul = l2_regul
 
         self.upsample4 = UpSampling2D(size=(4, 4), interpolation="bilinear")
         self.softmax = Activation("softmax")
@@ -23,7 +24,7 @@ class FPN(Layer):
             "padding": "same",
             "use_bias": True,
             "kernel_initializer": "he_uniform",
-            "kernel_regularizer": tf.keras.regularizers.l2(l2=1e-4),
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
         }
         self.fpn = FeaturePyramidNetwork()
 
@@ -50,7 +51,10 @@ class FPN(Layer):
     def get_config(self) -> Dict[str, Any]:
         config = super().get_config()
         config.update(
-            {"n_classes": self.n_classes},
+            {
+                "n_classes": self.n_classes,
+                "l2_regul": self.l2_regul,
+            },
         )
         return config
 

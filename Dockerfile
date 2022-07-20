@@ -20,5 +20,5 @@ WORKDIR /home/$USERNAME
 # COPY requirements.txt .
 # COPY requirements-dev.txt .
 
-RUN /bin/bash -c "pip install -r requirements.txt --no-cache-dir"
-RUN /bin/bash -c "pip install -r requirements-dev.txt --no-cache-dir"
+# RUN /bin/bash -c "pip install -r requirements.txt --no-cache-dir"
+# RUN /bin/bash -c "pip install -r requirements-dev.txt --no-cache-dir"
