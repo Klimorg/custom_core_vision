@@ -15,6 +15,8 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.models import Model, Sequential
 
+from core_vision.models.utils import TFModel
+
 
 @tf.keras.utils.register_keras_serializable()
 class ConvTokenizer(tf.keras.layers.Layer):
@@ -31,38 +33,38 @@ class ConvTokenizer(tf.keras.layers.Layer):
         self.filters = filters
         self.l2_regul = l2_regul
 
+    def build(self, input_shape) -> None:
+
+        conv_config = {
+            "padding": "same",
+            "use_bias": False,
+            "kernel_initializer": "he_uniform",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
+        }
+
         self.block = Sequential(
             [
                 Conv2D(
-                    filters // 2,
+                    self.filters // 2,
                     kernel_size=3,
                     strides=2,
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
                 Conv2D(
-                    filters // 2,
+                    self.filters // 2,
                     kernel_size=3,
                     strides=1,
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
                 Conv2D(
-                    filters,
+                    self.filters,
                     kernel_size=3,
                     strides=1,
-                    padding="same",
-                    use_bias=False,
-                    kernel_initializer="he_uniform",
-                    kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                    **conv_config,
                 ),
                 BatchNormalization(),
                 ReLU(),
@@ -83,6 +85,10 @@ class ConvTokenizer(tf.keras.layers.Layer):
             },
         )
         return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 @tf.keras.utils.register_keras_serializable()
@@ -105,6 +111,15 @@ class ConvStage(tf.keras.layers.Layer):
         self.filters_downsample = filters_downsample
         self.l2_regul = l2_regul
 
+    def build(self, input_shape) -> None:
+
+        conv_config = {
+            "padding": "same",
+            "use_bias": False,
+            "kernel_initializer": "he_uniform",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
+        }
+
         self.conv_blocks = [
             Sequential(
                 [
@@ -112,10 +127,7 @@ class ConvStage(tf.keras.layers.Layer):
                         self.filters_in,
                         kernel_size=1,
                         strides=1,
-                        padding="same",
-                        use_bias=False,
-                        kernel_initializer="he_uniform",
-                        kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                        **conv_config,
                     ),
                     BatchNormalization(),
                     ReLU(),
@@ -123,10 +135,7 @@ class ConvStage(tf.keras.layers.Layer):
                         self.filters_in,
                         kernel_size=3,
                         strides=1,
-                        padding="same",
-                        use_bias=False,
-                        kernel_initializer="he_uniform",
-                        kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                        **conv_config,
                     ),
                     BatchNormalization(),
                     ReLU(),
@@ -134,26 +143,20 @@ class ConvStage(tf.keras.layers.Layer):
                         self.filters_out,
                         kernel_size=1,
                         strides=1,
-                        padding="same",
-                        use_bias=False,
-                        kernel_initializer="he_uniform",
-                        kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+                        **conv_config,
                     ),
                     BatchNormalization(),
                     ReLU(),
                 ],
             )
-            for _ in range(num_blocks)
+            for _ in range(self.num_blocks)
         ]
 
         self.downsample = Conv2D(
             self.filters_downsample,
             kernel_size=3,
             strides=2,
-            padding="same",
-            use_bias=False,
-            kernel_initializer="he_uniform",
-            kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+            **conv_config,
         )
 
     def call(self, inputs, trainable=None) -> tf.Tensor:
@@ -177,6 +180,10 @@ class ConvStage(tf.keras.layers.Layer):
         )
         return config
 
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
 
 @tf.keras.utils.register_keras_serializable()
 class ConvDownsample(tf.keras.layers.Layer):
@@ -192,13 +199,20 @@ class ConvDownsample(tf.keras.layers.Layer):
         self.filters = filters
         self.l2_regul = l2_regul
 
+    def build(self, input_shape) -> None:
+
+        conv_config = {
+            "padding": "same",
+            "use_bias": False,
+            "kernel_initializer": "he_uniform",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
+        }
+
         self.downsample = Conv2D(
-            filters,
+            self.filters,
             kernel_size=3,
             strides=2,
-            padding="same",
-            kernel_initializer="he_uniform",
-            kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+            **conv_config,
         )
 
     def call(self, inputs) -> tf.Tensor:
@@ -215,6 +229,10 @@ class ConvDownsample(tf.keras.layers.Layer):
             },
         )
         return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 # Referred from: github.com:rwightman/pytorch-image-models.
@@ -438,114 +456,200 @@ class BasicStage(tf.keras.layers.Layer):
         return config
 
 
-def get_feature_extractor(
-    img_shape: List[int],
-    channels: int,
-    n_conv_blocks: int,
-    num_blocks: List[int],
-    units: List[int],
-    mlp_ratios: List[int],
-) -> tf.keras.Model:
-    """Instantiate a ConvMLP model.
+class ConvMLP(TFModel):
+    def __init__(
+        self,
+        img_shape: List[int],
+        channels: int,
+        n_conv_blocks: int,
+        num_blocks: List[int],
+        units: List[int],
+        mlp_ratios: List[int],
+        name: str,
+    ) -> None:
+        super().__init__()
 
-    Args:
-        img_shape (List[int]): Input shape of the images in the dataset.
-        channels (int): Number of filters used in the `ConvTokenizer` module.
-        n_conv_blocks (int): Number of conv blocks `Conv2D-Bn-ReLU x3` ins the `ConvStage` module.
-        num_blocks (List[int]): Number of `ConvMLPStage` blocks used at each level (ie each `BasicStage`).
-        units (List[int]): Number of units in the `Dense` layers of each `BasicStage`.
-        mlp_ratios (List[int]): Expansion factor in the hidden `Dense` layers of each `BasicStage`.
+        self.img_shape = img_shape
+        self.channels = channels
+        self.n_conv_blocks = n_conv_blocks
+        self.num_blocks = num_blocks
+        self.units = units
+        self.mlp_ratios = mlp_ratios
+        self.name = name
 
-    Returns:
-        A `tf.keras` model.
-    """
+        self.endpoint_layers = [
+            "tokenizer",
+            "conv",
+            "mlp1",
+            "mlp3",
+        ]
 
-    img_input = Input(img_shape)
+    def get_classification_backbone(self) -> Model:
+        return Sequential(
+            [
+                Input(self.img_shape),
+                ConvTokenizer(filters=self.channels, name="tokenizer"),
+                ConvStage(
+                    num_blocks=self.n_conv_blocks,
+                    filters_out=self.channels,
+                    filters_downsample=self.units[0],
+                    name="conv",
+                ),
+                BasicStage(
+                    num_blocks=self.num_blocks[0],
+                    units=self.units[1],
+                    mlp_ratio=self.mlp_ratios[0],
+                    downsample=True,
+                    name="mlp1",
+                ),
+                BasicStage(
+                    num_blocks=self.num_blocks[1],
+                    units=self.units[2],
+                    mlp_ratio=self.mlp_ratios[1],
+                    downsample=True,
+                    name="mlp2",
+                ),
+                BasicStage(
+                    num_blocks=self.num_blocks[2],
+                    units=self.units[3],
+                    mlp_ratio=self.mlp_ratios[2],
+                    downsample=False,
+                    name="mlp3",
+                ),
+            ],
+            name=self.name,
+        )
 
-    fmap = ConvTokenizer(filters=channels, name="tokenizer")(img_input)  # channels
+    def get_segmentation_backbone(
+        self,
+    ) -> Model:
+        """Instantiate the model and use it as a backbone (feature extractor) for a semantic segmentation task.
 
-    fmap = ConvStage(
-        num_blocks=n_conv_blocks,
-        filters_out=channels,
-        filters_downsample=units[0],
-        name="conv",
-    )(fmap)
-    fmap = BasicStage(
-        num_blocks=num_blocks[0],
-        units=units[1],
-        mlp_ratio=mlp_ratios[0],
-        downsample=True,
-        name="mlp1",
-    )(fmap)
-    fmap = BasicStage(
-        num_blocks=num_blocks[1],
-        units=units[2],
-        mlp_ratio=mlp_ratios[1],
-        downsample=True,
-        name="mlp2",
-    )(fmap)
-    fmap_out = BasicStage(
-        num_blocks=num_blocks[2],
-        units=units[3],
-        mlp_ratio=mlp_ratios[2],
-        downsample=False,
-        name="mlp3",
-    )(fmap)
+        Returns:
+            A `tf.keras` model.
+        """
 
-    return Model(img_input, fmap_out)
+        backbone = self.get_classification_backbone()
+
+        os4_output, os8_output, os16_output, os32_output = [
+            backbone.get_layer(layer_name).output for layer_name in self.endpoint_layers
+        ]
+
+        return Model(
+            inputs=[backbone.input],
+            outputs=[os4_output, os8_output, os16_output, os32_output],
+            name=self.name,
+        )
 
 
-def get_backbone(
-    img_shape: List[int],
-    channels: int,
-    n_conv_blocks: int,
-    num_blocks: List[int],
-    units: List[int],
-    mlp_ratios: List[int],
-    backbone_name: str,
-) -> tf.keras.Model:
-    """Instantiate the model and use it as a backbone (feature extractor) for a semantic segmentation task.
+# def get_feature_extractor(
+#     img_shape: List[int],
+#     channels: int,
+#     n_conv_blocks: int,
+#     num_blocks: List[int],
+#     units: List[int],
+#     mlp_ratios: List[int],
+# ) -> tf.keras.Model:
+#     """Instantiate a ConvMLP model.
 
-    Args:
-        img_shape (List[int]): Input shape of the images in the dataset.
-        channels (int): Number of filters used in the `ConvTokenizer` module.
-        n_conv_blocks (int): Number of conv blocks `Conv2D-Bn-ReLU x3` ins the `ConvStage` module.
-        num_blocks (List[int]): Number of `ConvMLPStage` blocks used at each level (ie each `BasicStage`).
-        units (List[int]): Number of units in the `Dense` layers of each `BasicStage`.
-        mlp_ratios (List[int]): Expansion factor in the hidden `Dense` layers of each `BasicStage`.
-        backbone_name (str): The name of the backbone
+#     Args:
+#         img_shape (List[int]): Input shape of the images in the dataset.
+#         channels (int): Number of filters used in the `ConvTokenizer` module.
+#         n_conv_blocks (int): Number of conv blocks `Conv2D-Bn-ReLU x3` ins the `ConvStage` module.
+#         num_blocks (List[int]): Number of `ConvMLPStage` blocks used at each level (ie each `BasicStage`).
+#         units (List[int]): Number of units in the `Dense` layers of each `BasicStage`.
+#         mlp_ratios (List[int]): Expansion factor in the hidden `Dense` layers of each `BasicStage`.
 
-    Returns:
-        A `tf.keras` model.
-    """
-    backbone = get_feature_extractor(
-        img_shape=img_shape,
-        channels=channels,
-        n_conv_blocks=n_conv_blocks,
-        num_blocks=num_blocks,
-        units=units,
-        mlp_ratios=mlp_ratios,
-    )
+#     Returns:
+#         A `tf.keras` model.
+#     """
 
-    endpoint_layers = [
-        "tokenizer",
-        "conv",
-        "mlp1",
-        "mlp3",
-    ]
+#     img_input = Input(img_shape)
 
-    os4_output, os8_output, os16_output, os32_output = [
-        backbone.get_layer(layer_name).output for layer_name in endpoint_layers
-    ]
+#     fmap = ConvTokenizer(filters=channels, name="tokenizer")(img_input)  # channels
 
-    height = img_shape[1]
-    logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
-    logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")
-    logger.info(f"os16_output OS : {int(height/os16_output.shape.as_list()[1])}")
-    logger.info(f"os32_output OS : {int(height/os32_output.shape.as_list()[1])}")
+#     fmap = ConvStage(
+#         num_blocks=n_conv_blocks,
+#         filters_out=channels,
+#         filters_downsample=units[0],
+#         name="conv",
+#     )(fmap)
+#     fmap = BasicStage(
+#         num_blocks=num_blocks[0],
+#         units=units[1],
+#         mlp_ratio=mlp_ratios[0],
+#         downsample=True,
+#         name="mlp1",
+#     )(fmap)
+#     fmap = BasicStage(
+#         num_blocks=num_blocks[1],
+#         units=units[2],
+#         mlp_ratio=mlp_ratios[1],
+#         downsample=True,
+#         name="mlp2",
+#     )(fmap)
+#     fmap_out = BasicStage(
+#         num_blocks=num_blocks[2],
+#         units=units[3],
+#         mlp_ratio=mlp_ratios[2],
+#         downsample=False,
+#         name="mlp3",
+#     )(fmap)
 
-    return Model(
-        inputs=[backbone.input],
-        outputs=[os4_output, os8_output, os16_output, os32_output],
-        name=backbone_name,
-    )
+#     return Model(img_input, fmap_out)
+
+
+# def get_backbone(
+#     img_shape: List[int],
+#     channels: int,
+#     n_conv_blocks: int,
+#     num_blocks: List[int],
+#     units: List[int],
+#     mlp_ratios: List[int],
+#     backbone_name: str,
+# ) -> tf.keras.Model:
+#     """Instantiate the model and use it as a backbone (feature extractor) for a semantic segmentation task.
+
+#     Args:
+#         img_shape (List[int]): Input shape of the images in the dataset.
+#         channels (int): Number of filters used in the `ConvTokenizer` module.
+#         n_conv_blocks (int): Number of conv blocks `Conv2D-Bn-ReLU x3` ins the `ConvStage` module.
+#         num_blocks (List[int]): Number of `ConvMLPStage` blocks used at each level (ie each `BasicStage`).
+#         units (List[int]): Number of units in the `Dense` layers of each `BasicStage`.
+#         mlp_ratios (List[int]): Expansion factor in the hidden `Dense` layers of each `BasicStage`.
+#         backbone_name (str): The name of the backbone
+
+#     Returns:
+#         A `tf.keras` model.
+#     """
+#     backbone = get_feature_extractor(
+#         img_shape=img_shape,
+#         channels=channels,
+#         n_conv_blocks=n_conv_blocks,
+#         num_blocks=num_blocks,
+#         units=units,
+#         mlp_ratios=mlp_ratios,
+#     )
+
+#     endpoint_layers = [
+#         "tokenizer",
+#         "conv",
+#         "mlp1",
+#         "mlp3",
+#     ]
+
+#     os4_output, os8_output, os16_output, os32_output = [
+#         backbone.get_layer(layer_name).output for layer_name in endpoint_layers
+#     ]
+
+#     height = img_shape[1]
+#     logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
+#     logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")
+#     logger.info(f"os16_output OS : {int(height/os16_output.shape.as_list()[1])}")
+#     logger.info(f"os32_output OS : {int(height/os32_output.shape.as_list()[1])}")
+
+#     return Model(
+#         inputs=[backbone.input],
+#         outputs=[os4_output, os8_output, os16_output, os32_output],
+#         name=backbone_name,
+#     )
