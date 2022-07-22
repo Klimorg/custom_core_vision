@@ -10,12 +10,13 @@ class SegmentationModel(Model):
         backbone: Model,
         segmentation_head: Layer,
         endpoint_layers: List[str],
-        name: str,
         *args,
         **kwargs,
     ):
 
-        super().__init__(name=name, *args, **kwargs)
+        super().__init__(
+            name=f"{backbone.name}_{segmentation_head.name}", *args, **kwargs
+        )
         self.backbone = backbone
         self.segmentation_head = segmentation_head
         self.endpoint_layers = endpoint_layers
@@ -34,7 +35,6 @@ class SegmentationModel(Model):
             self.backbone.get_layer(layer_name).output
             for layer_name in self.endpoint_layers
         ]
-
         # height = img_shape[1]
         # logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
         # logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")

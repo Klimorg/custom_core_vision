@@ -17,8 +17,8 @@ ENV PATH "$PATH:/usr/lib/python3.8/dist-packages"
 
 WORKDIR /home/$USERNAME
 
-# COPY requirements.txt .
-# COPY requirements-dev.txt .
+COPY requirements.txt .
+COPY requirements-dev.txt .
 
-# RUN /bin/bash -c "pip install -r requirements.txt --no-cache-dir"
-# RUN /bin/bash -c "pip install -r requirements-dev.txt --no-cache-dir"
+RUN /bin/bash -c "pip install -r requirements.txt --no-cache-dir"
+RUN /bin/bash -c "pip install -r requirements-dev.txt --no-cache-dir"

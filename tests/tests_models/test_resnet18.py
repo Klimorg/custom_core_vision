@@ -7,8 +7,6 @@ from pytest import fixture
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
-from core_vision.classification_model import ClassificationModel
-from core_vision.heads.classification_head import ClassificationHead
 from core_vision.models.resnet18 import ResNet18, ResNetBlock
 from tests.utils import BaseLayer, BaseModel
 
@@ -46,7 +44,7 @@ class TestLayer(BaseLayer):
 
 class TestResNet18(BaseModel):
     def test_model_constructor(self):
-        model = ResNet18()
+        model = ResNet18(img_shape=[224, 224, 3])
         super().test_model_constructor(model)
 
     # @given(
@@ -56,26 +54,15 @@ class TestResNet18(BaseModel):
     #         shape=[1, 224, 224, 3],
     #     ),
     # )
-    def test_backbone(self, fmap):
-        model = ResNet18()
-        out = model(fmap)
+    def test_classification_backbone(self, fmap):
+        model = ResNet18(img_shape=[224, 224, 3])
+        backbone = model.get_classification_backbone()
+        out = backbone(fmap)
 
         assert out.shape.as_list() == [1, 7, 7, 512]
 
-    def test_classification_model(self, fmap):
-        model = ResNet18()
-        head = ClassificationHead(units=32, num_classes=10)
+    def test_segmentation_backbone(self, fmap):
+        model = ResNet18(img_shape=[224, 224, 3])
+        backbone = model.get_segmentation_backbone()
 
-        model = ClassificationModel(
-            backbone=model,
-            classification_head=head,
-            name=f"{model.name}_classification",
-        )
-
-        out = model(fmap)
-
-        assert isinstance(model, Model)
-        assert out.shape.as_list()[1] == 10
-
-    def test_segmentation_model(self):
-        pass
+        super().test_segmentation_backbone(fmap=fmap, backbone=backbone)

@@ -14,7 +14,7 @@ from tensorflow.keras.layers import (
     Reshape,
 )
 
-from core_vision.models.layers.common_layers import InvertedResidualBottleneck2D
+from core_vision.layers.common_layers import InvertedResidualBottleneck2D
 
 
 @tf.keras.utils.register_keras_serializable()

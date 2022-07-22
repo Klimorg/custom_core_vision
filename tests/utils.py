@@ -4,23 +4,29 @@ from typing import Dict
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
+from core_vision.models.utils import TFModel
+
 
 class BaseModel(ABC):
     @abstractmethod
     def test_model_constructor(self, model: Model):
-        assert isinstance(model, Model)
+        assert isinstance(model, TFModel)
 
     @abstractmethod
-    def test_backbone(self, fmap):
+    def test_classification_backbone(self, fmap):
         pass
 
     @abstractmethod
-    def test_classification_model(self, fmap):
-        pass
+    def test_segmentation_backbone(self, fmap, backbone: Model):
 
-    @abstractmethod
-    def test_segmentation_model(self, fmap):
-        pass
+        out = backbone(fmap)
+
+        assert isinstance(backbone, Model)
+        assert len(out) == 4
+        assert 224 / out[0].shape.as_list()[1] == 4
+        assert 224 / out[1].shape.as_list()[1] == 8
+        assert 224 / out[2].shape.as_list()[1] == 16
+        assert 224 / out[3].shape.as_list()[1] == 32
 
 
 class BaseLayer(ABC):

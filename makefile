@@ -91,3 +91,27 @@ install_precommit:
 .PHONY: check_precommit
 check_precommit:
 	pre-commit run --all
+
+# Docker
+.PHONY: build_docker
+build_docker:
+	docker build \
+	--build-arg USER_UID=$$(id -u) \
+	--build-arg USER_GID=$$(id -g) \
+	--rm \
+	-f Dockerfile \
+	-t core_vision:v1 .
+
+.PHONY: run_docker
+run_docker:
+	docker run --gpus all \
+	--shm-size=2g \
+	--ulimit memlock=-1 \
+	--ulimit stack=67108864 \
+	-it \
+	--rm \
+	--mount type=bind,source=$(PWD),target=/home/$(USERNAME)/core_vision \
+	-e TF_FORCE_GPU_ALLOW_GROWTH=true \
+	-e TF_ENABLE_ONEDNN_OPTS=true \
+	-e XLA_FLAGS='--xla_gpu_autotune_level=2' \
+	core_vision:v1

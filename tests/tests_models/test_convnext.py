@@ -3,9 +3,8 @@ import pytest
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
 
-from core_vision.classification_model import ClassificationModel
-from core_vision.heads.classification_head import ClassificationHead
-from core_vision.models.convnext import ConvNext, ConvNextBlock, ConvNeXtLayer
+from core_vision.models.convnext import ConvNeXt, ConvNextBlock, ConvNeXtLayer
+from core_vision.models.utils import TFModel
 from tests.utils import BaseLayer, BaseModel
 
 
@@ -55,33 +54,37 @@ class TestLayer(BaseLayer):
         ([256, 512, 1024, 2048], [3, 3, 27, 3], "convnext-xl"),
     ],
 )
-class TestConvNext(BaseModel):
+class TestConvNeXt(BaseModel):
     def test_model_constructor(self, filters, num_blocks, name):
-        model = ConvNext(filters=filters, num_blocks=num_blocks, name=name)
-
-        assert isinstance(model, Model)
-
-    def test_backbone(self, fmap, filters, num_blocks, name):
-        model = ConvNext(filters=filters, num_blocks=num_blocks, name=name)
-        out = model(fmap)
-
-        assert out.shape.as_list() == [1, 7, 7, filters[3]]
-
-    def test_classification_model(self, fmap, filters, num_blocks, name):
-        backbone = ConvNext(filters=filters, num_blocks=num_blocks, name=name)
-
-        head = ClassificationHead(units=32, num_classes=10)
-
-        model = ClassificationModel(
-            backbone=backbone,
-            classification_head=head,
-            name=f"{backbone.name}_classification",
+        model = ConvNeXt(
+            img_shape=[224, 224, 3],
+            filters=filters,
+            num_blocks=num_blocks,
+            name=name,
         )
 
-        out = model(fmap)
+        super().test_model_constructor(model)
 
-        assert isinstance(model, Model)
-        assert out.shape.as_list()[1] == 10
+    def test_classification_backbone(self, fmap, filters, num_blocks, name):
+        model = ConvNeXt(
+            img_shape=[224, 224, 3],
+            filters=filters,
+            num_blocks=num_blocks,
+            name=name,
+        )
+        backbone = model.get_classification_backbone()
+        out = backbone(fmap)
 
-    def test_segmentation_model(self, fmap, filters, num_blocks, name):
-        pass
+        assert isinstance(backbone, Model)
+        assert out.shape.as_list() == [1, 7, 7, filters[3]]
+
+    def test_segmentation_backbone(self, fmap, filters, num_blocks, name):
+        model = ConvNeXt(
+            img_shape=[224, 224, 3],
+            filters=filters,
+            num_blocks=num_blocks,
+            name=name,
+        )
+        backbone = model.get_segmentation_backbone()
+
+        super().test_segmentation_backbone(fmap=fmap, backbone=backbone)

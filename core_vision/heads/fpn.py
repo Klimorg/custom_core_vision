@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import tensorflow as tf
 from tensorflow.keras import Model
@@ -37,7 +37,9 @@ class FPN(Layer):
             **conv_config,
         )
 
-    def call(self, inputs, training=None) -> tf.Tensor:
+    def call(self, inputs: List[tf.Tensor], training=None) -> tf.Tensor:
+
+        # os4_output, os8_output, os16_output, os32 = inputs
 
         fmap = self.fpn(inputs)
 

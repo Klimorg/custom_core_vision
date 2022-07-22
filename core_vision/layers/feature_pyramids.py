@@ -101,12 +101,12 @@ class FeaturePyramidNetwork(Layer):
 
     def call(self, inputs: List[tf.Tensor], training=None) -> List[tf.Tensor]:
 
-        c2_output, c3_output, c4_output, c5_output = inputs
+        os4_output, os8_output, os16_output, os32_output = inputs
 
-        p2_output = self.conv1(c2_output)
-        p3_output = self.conv2(c3_output)
-        p4_output = self.conv3(c4_output)
-        p5_output = self.conv4(c5_output)
+        p2_output = self.conv1(os4_output)
+        p3_output = self.conv2(os8_output)
+        p4_output = self.conv3(os16_output)
+        p5_output = self.conv4(os32_output)
 
         p4_output = p4_output + self.upsample(p5_output)
 
