@@ -176,36 +176,36 @@ class VoVNet(TFModel):
             OSAModule(
                 filters_conv3x3=self.filters_conv3x3[0],
                 filters_conv1x1=self.filters_conv1x1[0],
-                name="block_1",
+                name=f"block_1_{idx}",
             )
-            for _ in range(self.block_repetitions[0])
+            for idx in range(self.block_repetitions[0])
         ]
 
         block2 = [
             OSAModule(
                 filters_conv3x3=self.filters_conv3x3[1],
                 filters_conv1x1=self.filters_conv1x1[1],
-                name="block_2",
+                name=f"block_2_{idx}",
             )
-            for _ in range(self.block_repetitions[1])
+            for idx in range(self.block_repetitions[1])
         ]
 
         block3 = [
             OSAModule(
                 filters_conv3x3=self.filters_conv3x3[2],
                 filters_conv1x1=self.filters_conv1x1[2],
-                name="block_3",
+                name=f"block_3_{idx}",
             )
-            for _ in range(self.block_repetitions[2])
+            for idx in range(self.block_repetitions[2])
         ]
 
         block4 = [
             OSAModule(
                 filters_conv3x3=self.filters_conv3x3[3],
                 filters_conv1x1=self.filters_conv1x1[3],
-                name="block_4",
+                name=f"block_4_{idx}",
             )
-            for _ in range(self.block_repetitions[3])
+            for idx in range(self.block_repetitions[3])
         ]
 
         return Sequential(
@@ -214,6 +214,7 @@ class VoVNet(TFModel):
                 ConvBNReLU(
                     filters=64,
                     kernel_size=3,
+                    strides=2,
                     name="stem_stage_1",
                 ),
                 ConvBNReLU(
