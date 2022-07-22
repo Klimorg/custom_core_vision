@@ -2,13 +2,13 @@ from typing import Any, Dict, List
 
 import numpy as np
 import tensorflow as tf
-from loguru import logger
 from tensorflow.keras.layers import (
     BatchNormalization,
     Conv2D,
     Dense,
     DepthwiseConv2D,
     Input,
+    Layer,
     LayerNormalization,
     MaxPool2D,
     ReLU,
@@ -356,7 +356,7 @@ class ConvMLPStage(tf.keras.layers.Layer):
 
         self.channel_mlp1 = Mlp(fc1_units=self.expansion_units, fc2_units=self.units)
         self.channel_mlp2 = Mlp(fc1_units=self.expansion_units, fc2_units=self.units)
-        self.stochastic_drop = (
+        self.stochastic_drop: Layer = (
             StochasticDepth(drop_prop=self.stochastic_depth_rate)
             if self.stochastic_depth_rate > 0
             else Identity()
@@ -428,7 +428,7 @@ class BasicStage(tf.keras.layers.Layer):
             for idx in range(self.num_blocks)
         ]
 
-        self.downsample_mlp = (
+        self.downsample_mlp: Layer = (
             ConvDownsample(filters=int(self.units * 2))
             if self.downsample
             else Identity()
@@ -540,116 +540,3 @@ class ConvMLP(TFModel):
             outputs=[os4_output, os8_output, os16_output, os32_output],
             name=self.name,
         )
-
-
-# def get_feature_extractor(
-#     img_shape: List[int],
-#     channels: int,
-#     n_conv_blocks: int,
-#     num_blocks: List[int],
-#     units: List[int],
-#     mlp_ratios: List[int],
-# ) -> tf.keras.Model:
-#     """Instantiate a ConvMLP model.
-
-#     Args:
-#         img_shape (List[int]): Input shape of the images in the dataset.
-#         channels (int): Number of filters used in the `ConvTokenizer` module.
-#         n_conv_blocks (int): Number of conv blocks `Conv2D-Bn-ReLU x3` ins the `ConvStage` module.
-#         num_blocks (List[int]): Number of `ConvMLPStage` blocks used at each level (ie each `BasicStage`).
-#         units (List[int]): Number of units in the `Dense` layers of each `BasicStage`.
-#         mlp_ratios (List[int]): Expansion factor in the hidden `Dense` layers of each `BasicStage`.
-
-#     Returns:
-#         A `tf.keras` model.
-#     """
-
-#     img_input = Input(img_shape)
-
-#     fmap = ConvTokenizer(filters=channels, name="tokenizer")(img_input)  # channels
-
-#     fmap = ConvStage(
-#         num_blocks=n_conv_blocks,
-#         filters_out=channels,
-#         filters_downsample=units[0],
-#         name="conv",
-#     )(fmap)
-#     fmap = BasicStage(
-#         num_blocks=num_blocks[0],
-#         units=units[1],
-#         mlp_ratio=mlp_ratios[0],
-#         downsample=True,
-#         name="mlp1",
-#     )(fmap)
-#     fmap = BasicStage(
-#         num_blocks=num_blocks[1],
-#         units=units[2],
-#         mlp_ratio=mlp_ratios[1],
-#         downsample=True,
-#         name="mlp2",
-#     )(fmap)
-#     fmap_out = BasicStage(
-#         num_blocks=num_blocks[2],
-#         units=units[3],
-#         mlp_ratio=mlp_ratios[2],
-#         downsample=False,
-#         name="mlp3",
-#     )(fmap)
-
-#     return Model(img_input, fmap_out)
-
-
-# def get_backbone(
-#     img_shape: List[int],
-#     channels: int,
-#     n_conv_blocks: int,
-#     num_blocks: List[int],
-#     units: List[int],
-#     mlp_ratios: List[int],
-#     backbone_name: str,
-# ) -> tf.keras.Model:
-#     """Instantiate the model and use it as a backbone (feature extractor) for a semantic segmentation task.
-
-#     Args:
-#         img_shape (List[int]): Input shape of the images in the dataset.
-#         channels (int): Number of filters used in the `ConvTokenizer` module.
-#         n_conv_blocks (int): Number of conv blocks `Conv2D-Bn-ReLU x3` ins the `ConvStage` module.
-#         num_blocks (List[int]): Number of `ConvMLPStage` blocks used at each level (ie each `BasicStage`).
-#         units (List[int]): Number of units in the `Dense` layers of each `BasicStage`.
-#         mlp_ratios (List[int]): Expansion factor in the hidden `Dense` layers of each `BasicStage`.
-#         backbone_name (str): The name of the backbone
-
-#     Returns:
-#         A `tf.keras` model.
-#     """
-#     backbone = get_feature_extractor(
-#         img_shape=img_shape,
-#         channels=channels,
-#         n_conv_blocks=n_conv_blocks,
-#         num_blocks=num_blocks,
-#         units=units,
-#         mlp_ratios=mlp_ratios,
-#     )
-
-#     endpoint_layers = [
-#         "tokenizer",
-#         "conv",
-#         "mlp1",
-#         "mlp3",
-#     ]
-
-#     os4_output, os8_output, os16_output, os32_output = [
-#         backbone.get_layer(layer_name).output for layer_name in endpoint_layers
-#     ]
-
-#     height = img_shape[1]
-#     logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
-#     logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")
-#     logger.info(f"os16_output OS : {int(height/os16_output.shape.as_list()[1])}")
-#     logger.info(f"os32_output OS : {int(height/os32_output.shape.as_list()[1])}")
-
-#     return Model(
-#         inputs=[backbone.input],
-#         outputs=[os4_output, os8_output, os16_output, os32_output],
-#         name=backbone_name,
-#     )

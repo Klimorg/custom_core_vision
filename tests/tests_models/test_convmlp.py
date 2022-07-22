@@ -15,10 +15,6 @@ from core_vision.models.convmlp import (
 )
 from tests.utils import BaseLayer, BaseModel
 
-# from hypothesis import given
-# from hypothesis import strategies as st
-# from hypothesis.extra.numpy import arrays
-
 
 @fixture
 def fmap():

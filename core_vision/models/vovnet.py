@@ -1,81 +1,150 @@
-from typing import List
+from typing import Any, Dict, List
 
 import tensorflow as tf
 from loguru import logger
-from tensorflow.keras import Model
-from tensorflow.keras.layers import Concatenate, Input, MaxPool2D
+from tensorflow.keras import Model, Sequential
+from tensorflow.keras.layers import Concatenate, Input, Layer, MaxPool2D
 
-from core_vision.layers.common_layers import conv_bn_relu
+from core_vision.layers.common_layers import ConvBNReLU
+from core_vision.models.utils import TFModel
 
 
-def osa_module(
-    tensor: tf.Tensor,
-    filters_conv3x3: int,
-    filters_conv1x1: int,
-    block_name: str,
-) -> tf.Tensor:
-    """One-Shot Aggregation module, the backbone of the VoVNet model.
+@tf.keras.utils.register_keras_serializable()
+class OSAModule(Layer):
+    def __init__(
+        self,
+        filters_conv3x3: int,
+        filters_conv1x1: int,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.filters_conv3x3 = filters_conv3x3
+        self.filters_conv1x1 = filters_conv1x1
 
-    Architecture:
-        ![Architecture](./images/osa_module.svg)
+        self.concat = Concatenate(axis=-1)
 
-    Args:
-        tensor (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
-        filters_conv3x3 (int): Numbers of filters used in the 3x3 `Conv2D` layers.
-        filters_conv1x1 (int): Numbers of filters used in the 1x1 `Conv2D` layer.
-        block_name (str): Name of the module.
+    def build(self, input_shape) -> None:
 
-    Returns:
-        Output feature map, size = $(H,W,\mathrm{filters\_ conv1x1})$.
-    """
+        self.conv1 = ConvBNReLU(
+            filters=self.filters_conv3x3,
+            kernel_size=3,
+        )
+        self.conv2 = ConvBNReLU(
+            filters=self.filters_conv3x3,
+            kernel_size=3,
+        )
+        self.conv3 = ConvBNReLU(
+            filters=self.filters_conv3x3,
+            kernel_size=3,
+        )
+        self.conv4 = ConvBNReLU(
+            filters=self.filters_conv3x3,
+            kernel_size=3,
+        )
+        self.conv5 = ConvBNReLU(
+            filters=self.filters_conv3x3,
+            kernel_size=3,
+        )
+        self.conv6 = ConvBNReLU(
+            filters=self.filters_conv1x1,
+            kernel_size=1,
+        )
 
-    fmap1 = conv_bn_relu(
-        tensor=tensor,
-        filters=filters_conv3x3,
-        kernel_size=3,
-        strides=1,
-        name=f"conv3_1_block_{block_name}",
-    )
-    fmap2 = conv_bn_relu(
-        tensor=fmap1,
-        filters=filters_conv3x3,
-        kernel_size=3,
-        strides=1,
-        name=f"conv3_2_block_{block_name}",
-    )
-    fmap3 = conv_bn_relu(
-        tensor=fmap2,
-        filters=filters_conv3x3,
-        kernel_size=3,
-        strides=1,
-        name=f"conv3_3_block_{block_name}",
-    )
-    fmap4 = conv_bn_relu(
-        tensor=fmap3,
-        filters=filters_conv3x3,
-        kernel_size=3,
-        strides=1,
-        name=f"conv3_4_block_{block_name}",
-    )
-    fmap5 = conv_bn_relu(
-        tensor=fmap4,
-        filters=filters_conv3x3,
-        kernel_size=3,
-        strides=1,
-        name=f"conv3_5_block_{block_name}",
-    )
+    def call(self, inputs: tf.Tensor, training=None) -> tf.Tensor:
+        fmap1 = self.conv1(inputs)
+        fmap2 = self.conv2(inputs)
+        fmap3 = self.conv3(inputs)
+        fmap4 = self.conv4(inputs)
+        fmap5 = self.conv5(inputs)
 
-    fmap = Concatenate(axis=-1, name=f"concat_{block_name}")(
-        [fmap1, fmap2, fmap3, fmap4, fmap5],
-    )
+        fmap = self.concat([fmap1, fmap2, fmap3, fmap4, fmap5])
 
-    return conv_bn_relu(
-        tensor=fmap,
-        filters=filters_conv1x1,
-        kernel_size=1,
-        strides=1,
-        name=f"conv1_out_block_{block_name}",
-    )
+        return self.conv6(fmap)
+
+    def get_config(self) -> Dict[str, Any]:
+        config = super().get_config()
+        config.update(
+            {
+                "filters_conv3x3": self.filters_conv3x3,
+                "filters_conv1x1": self.filters_conv1x1,
+            },
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+# def osa_module(
+#     tensor: tf.Tensor,
+#     filters_conv3x3: int,
+#     filters_conv1x1: int,
+#     block_name: str,
+# ) -> tf.Tensor:
+#     """One-Shot Aggregation module, the backbone of the VoVNet model.
+
+#     Architecture:
+#         ![Architecture](./images/osa_module.svg)
+
+#     Args:
+#         tensor (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
+#         filters_conv3x3 (int): Numbers of filters used in the 3x3 `Conv2D` layers.
+#         filters_conv1x1 (int): Numbers of filters used in the 1x1 `Conv2D` layer.
+#         block_name (str): Name of the module.
+
+#     Returns:
+#         Output feature map, size = $(H,W,\mathrm{filters\_ conv1x1})$.
+#     """
+
+#     fmap1 = conv_bn_relu(
+#         tensor=tensor,
+#         filters=filters_conv3x3,
+#         kernel_size=3,
+#         strides=1,
+#         name=f"conv3_1_block_{block_name}",
+#     )
+#     fmap2 = conv_bn_relu(
+#         tensor=fmap1,
+#         filters=filters_conv3x3,
+#         kernel_size=3,
+#         strides=1,
+#         name=f"conv3_2_block_{block_name}",
+#     )
+#     fmap3 = conv_bn_relu(
+#         tensor=fmap2,
+#         filters=filters_conv3x3,
+#         kernel_size=3,
+#         strides=1,
+#         name=f"conv3_3_block_{block_name}",
+#     )
+#     fmap4 = conv_bn_relu(
+#         tensor=fmap3,
+#         filters=filters_conv3x3,
+#         kernel_size=3,
+#         strides=1,
+#         name=f"conv3_4_block_{block_name}",
+#     )
+#     fmap5 = conv_bn_relu(
+#         tensor=fmap4,
+#         filters=filters_conv3x3,
+#         kernel_size=3,
+#         strides=1,
+#         name=f"conv3_5_block_{block_name}",
+#     )
+
+#     fmap = Concatenate(axis=-1, name=f"concat_{block_name}")(
+#         [fmap1, fmap2, fmap3, fmap4, fmap5],
+#     )
+
+#     return conv_bn_relu(
+#         tensor=fmap,
+#         filters=filters_conv1x1,
+#         kernel_size=1,
+#         strides=1,
+#         name=f"conv1_out_block_{block_name}",
+#     )
 
 
 def get_feature_extractor(

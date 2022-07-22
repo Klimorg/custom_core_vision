@@ -4,9 +4,9 @@
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 
 # custom_core_vision
-Repos with CNNS model from articles.
 
+Repos with CNNS model from articles.
 
 # TODO :
 
-* Use stochastic depth from tf-addons.
+- Use stochastic depth from tf-addons.
