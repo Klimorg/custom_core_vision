@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -13,20 +13,14 @@ from tensorflow.keras.layers import (
     DepthwiseConv2D,
     GlobalAveragePooling2D,
     Input,
+    Layer,
     ReLU,
     Reshape,
 )
 
 
-def ghost_module(
-    fmap: tf.Tensor,
-    out: int,
-    ratio: int,
-    convkernel: Tuple[int, int],
-    dwkernel: Tuple[int, int],
-    name: str,
-    l2_regul: float = 1e-4,
-) -> tf.Tensor:
+@tf.keras.utils.register_keras_serializable()
+class GhostModule(Layer):
     """Primary module of the GhostNet architecture.
 
     Args:
@@ -46,43 +40,137 @@ def ghost_module(
         Output feature map, size = $(H,W,\mathrm{out})$
     """
 
-    filters = int(np.ceil(out / ratio))
-    channels = int(out - filters)
+    def __init__(
+        self,
+        out: int,
+        ratio: int,
+        convkernel: Tuple[int, int],
+        dwkernel: Tuple[int, int],
+        l2_regul: float = 1e-4,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.out = out
+        self.ratio = ratio
+        self.convkernel = convkernel
+        self.dwkernel = dwkernel
+        self.l2_regul = l2_regul
 
-    fmap = Conv2D(
-        filters=filters,
-        kernel_size=convkernel,
-        strides=(1, 1),
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
-        name=f"conv_ghost_module_{name}",
-    )(fmap)
+        self.filters = int(np.ceil(out / ratio))
+        self.channels = int(out - self.filters)
 
-    dwfmap = DepthwiseConv2D(
-        kernel_size=dwkernel,
-        strides=(1, 1),
-        padding="same",
-        depth_multiplier=ratio - 1,
-        use_bias=False,
-        depthwise_initializer="he_uniform",
-        depthwise_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
-        name=f"depthconv_ghost_module_{name}",
-    )(fmap)
+        self.concat = Concatenate(axis=-1)
 
-    return Concatenate(axis=-1, name=f"concat_ghost_module_{name}")(
-        [fmap, dwfmap[:, :, :, :channels]],
-    )
+    def build(self, input_shape) -> None:
+
+        self.conv = Conv2D(
+            filters=self.filters,
+            kernel_size=self.convkernel,
+            strides=(1, 1),
+            padding="same",
+            use_bias=False,
+            kernel_initializer="he_uniform",
+            kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+        )
+
+        self.dwconv = DepthwiseConv2D(
+            kernel_size=self.dwkernel,
+            strides=(1, 1),
+            depth_multiplier=self.ratio - 1,
+            padding="same",
+            use_bias=False,
+            depthwise_initializer="he_uniform",
+            depthwise_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+        )
+
+    def call(self, inputs: tf.Tensor, training=None) -> tf.Tensor:
+
+        fmap = self.conv(inputs)
+        dwfmap = self.dwconv(fmap)
+
+        return self.concat(
+            [fmap, dwfmap[:, :, :, : self.channels]],
+        )
+
+    def get_config(self) -> Dict[str, Any]:
+        config = super().get_config()
+        config.update(
+            {
+                "out": self.out,
+                "ratio": self.ratio,
+                "convkernel": self.convkernel,
+                "dwkernel": self.dwkernel,
+                "l2_regul": self.l2_regul,
+            },
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
-def se_module(
-    fmap_in: tf.Tensor,
-    ratio: int,
-    filters: int,
-    name: str,
-    l2_regul: float = 1e-4,
-) -> tf.Tensor:
+# def ghost_module(
+#     fmap: tf.Tensor,
+#     out: int,
+#     ratio: int,
+#     convkernel: Tuple[int, int],
+#     dwkernel: Tuple[int, int],
+#     name: str,
+#     l2_regul: float = 1e-4,
+# ) -> tf.Tensor:
+#     """Primary module of the GhostNet architecture.
+
+#     Args:
+#         fmap (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
+#         out (int): Number of channels of the output feature map.
+#         ratio (int): Define the ratio between the number of filters of the Conv2D layer
+#             and the number of filters of the `DepthwiseConv2D` in the last `Concatenate`
+#             layer. `depth_multiplier` of the `DepthwiseConv2D` layer is also defined as
+#             `ratio-1`.
+#         convkernel (Tuple[int, int]): Number of convolution kernels in the `Conv2D` layer.
+#         dwkernel (Tuple[int, int]): Number of convolution kernels in the `DepthwiseConv2D` layer.
+#         name (str): Name of the module.
+#         l2_regul (float, optional): Value of the constraint used for the
+#             $L_2$ regularization. Defaults to 1e-4.
+
+#     Returns:
+#         Output feature map, size = $(H,W,\mathrm{out})$
+#     """
+
+#     filters = int(np.ceil(out / ratio))
+#     channels = int(out - filters)
+
+#     fmap = Conv2D(
+#         filters=filters,
+#         kernel_size=convkernel,
+#         strides=(1, 1),
+#         padding="same",
+#         use_bias=False,
+#         kernel_initializer="he_uniform",
+#         kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+#         name=f"conv_ghost_module_{name}",
+#     )(fmap)
+
+#     dwfmap = DepthwiseConv2D(
+#         kernel_size=dwkernel,
+#         strides=(1, 1),
+#         padding="same",
+#         depth_multiplier=ratio - 1,
+#         use_bias=False,
+#         depthwise_initializer="he_uniform",
+#         depthwise_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+#         name=f"depthconv_ghost_module_{name}",
+#     )(fmap)
+
+#     return Concatenate(axis=-1, name=f"concat_ghost_module_{name}")(
+#         [fmap, dwfmap[:, :, :, :channels]],
+#     )
+
+
+@tf.keras.utils.register_keras_serializable()
+class SqueezeAndExcite(Layer):
     """Squeeze-and-Excitation Module.
 
     Architecture:
@@ -101,36 +189,265 @@ def se_module(
         Output feature map, size = $(H,W,C)$.
     """
 
-    channels = int(fmap_in.shape[-1])
+    def __init__(
+        self,
+        ratio: int,
+        filters: int,
+        name: str,
+        l2_regul: float = 1e-4,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.ratio = ratio
+        self.filters = filters
+        self.name = name
+        self.l2_regul = l2_regul
 
-    fmap = GlobalAveragePooling2D(name=f"gap_se_module_{name}")(fmap_in)
-    fmap = Reshape((1, 1, channels), name=f"reshape_se_module_{name}")(fmap)
+        self.excitation = Activation("sigmoid")
+        self.global_avg = GlobalAveragePooling2D()
+        self.relu = ReLU()
 
-    fmap = Conv2D(
-        filters=int(filters / ratio),
-        kernel_size=(1, 1),
-        strides=(1, 1),
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
-        name=f"conv1_se_module_{name}",
-    )(fmap)
-    fmap = ReLU(name=f"relu_se_module_{name}")(fmap)
-    fmap = Conv2D(
-        filters=filters,
-        kernel_size=(1, 1),
-        strides=(1, 1),
-        padding="same",
-        use_bias=False,
-        kernel_initializer="he_uniform",
-        kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
-        name=f"conv2_se_module_{name}",
-    )(fmap)
+    def build(self, input_shape) -> None:
+        _, _, _, channels = input_shape
+        conv_config = {
+            "padding": "same",
+            "use_bias": False,
+            "kernel_initializer": "he_uniform",
+            "kernel_regularizer": tf.keras.regularizers.l2(l2=self.l2_regul),
+        }
 
-    excitation = Activation("sigmoid", name=f"sigmoid_se_module_{name}")(fmap)
+        self.reshape = Reshape((1, 1, channels))
 
-    return fmap_in * excitation
+        self.conv1 = Conv2D(
+            filters=int(self.filters / self.ratio),
+            kernel_size=(1, 1),
+            strides=(1, 1),
+            **conv_config,
+        )
+        self.conv2 = Conv2D(
+            filters=self.filters,
+            kernel_size=(1, 1),
+            strides=(1, 1),
+            **conv_config,
+        )
+
+    def call(self, inputs, training=None) -> tf.Tensor:
+
+        excite = self.global_avg(inputs)
+        excite = self.reshape(excite)
+        excite = self.conv1(excite)
+        excite = self.relu(excite)
+        excite = self.conv2(excite)
+        excite = self.excitation(excite)
+
+        return inputs * excite
+
+    def get_config(self) -> Dict[str, Any]:
+        config = super().get_config()
+        config.update(
+            {
+                "ratio": self.ratio,
+                "filters": self.filters,
+                "name": self.name,
+                "l2_regul": self.l2_regul,
+            },
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+# def se_module(
+#     fmap_in: tf.Tensor,
+#     ratio: int,
+#     filters: int,
+#     name: str,
+#     l2_regul: float = 1e-4,
+# ) -> tf.Tensor:
+#     """Squeeze-and-Excitation Module.
+
+#     Architecture:
+#         ![architecture](./images/se_module.svg)
+
+#         Source : [ArXiv link](https://arxiv.org/abs/1709.01507)
+
+#     Args:
+#         fmap_in (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
+#         ratio (int): Define the ratio of filters used in the squeeze operation of the modle (the first Conv2D).
+#         filters (int): Numbers of filters used in the excitation operation of the module (the second Conv2D).
+#         name (str): Name of the module.
+#         l2_regul (float, optional): Value of the constraint used for the
+#             $L_2$ regularization. Defaults to 1e-4.
+#     Returns:
+#         Output feature map, size = $(H,W,C)$.
+#     """
+
+#     channels = int(fmap_in.shape[-1])
+
+#     fmap = GlobalAveragePooling2D(name=f"gap_se_module_{name}")(fmap_in)
+#     fmap = Reshape((1, 1, channels), name=f"reshape_se_module_{name}")(fmap)
+
+#     fmap = Conv2D(
+#         filters=int(filters / ratio),
+#         kernel_size=(1, 1),
+#         strides=(1, 1),
+#         padding="same",
+#         use_bias=False,
+#         kernel_initializer="he_uniform",
+#         kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+#         name=f"conv1_se_module_{name}",
+#     )(fmap)
+#     fmap = ReLU(name=f"relu_se_module_{name}")(fmap)
+#     fmap = Conv2D(
+#         filters=filters,
+#         kernel_size=(1, 1),
+#         strides=(1, 1),
+#         padding="same",
+#         use_bias=False,
+#         kernel_initializer="he_uniform",
+#         kernel_regularizer=tf.keras.regularizers.l2(l2=l2_regul),
+#         name=f"conv2_se_module_{name}",
+#     )(fmap)
+
+#     excitation = Activation("sigmoid", name=f"sigmoid_se_module_{name}")(fmap)
+
+#     return fmap_in * excitation
+
+
+@tf.keras.utils.register_keras_serializable()
+class GhostBottleneckModule(Layer):
+    """Ghost Bottleneck Module, the backbone of the GhostNet model.
+
+    Args:
+        fmap_in (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
+        dwkernel (int): Number of convolution kernels in the `DepthwiseConv2D` layer.
+        strides (int): Stride used in the `DepthwiseConv2D` layers.
+        exp (int): Number of filters used as an expansion operation in the first `ghost_module`.
+        out (int): Number of filters/channels of the output feature map.
+        ratio (int): Define the ratio in the `ghost_module` between the number of filters of the Conv2D layer
+            and the number of filters of the `DepthwiseConv2D` in the last `Concatenate`
+            layer. `depth_multiplier` of the `DepthwiseConv2D` layer is also defined as
+            `ratio-1`.
+        use_se (bool): Determine whether or not use a squeeze-and-excitation module before
+            the last `ghost_module` layer.
+        name (str): Name of the module.
+        l2_regul (float, optional): Value of the constraint used for the
+            $L_2$ regularization. Defaults to 1e-4.
+    Returns:
+        Output feature map, size = $(H,W,\mathrm{out})$.
+    """
+
+    def __init__(
+        self,
+        dwkernel: int,
+        strides: int,
+        exp: int,
+        out: int,
+        ratio: int,
+        use_se: bool,
+        name: str,
+        l2_regul: float = 1e-4,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.dwkernel = dwkernel
+        self.strides = strides
+        self.exp = exp
+        self.out = out
+        self.ratio = ratio
+        self.use_se = use_se
+        self.name = name
+        self.l2_regul = l2_regul
+
+        self.bn1 = BatchNormalization()
+        self.bn2 = BatchNormalization()
+        self.bn3 = BatchNormalization()
+        self.bn4 = BatchNormalization()
+        self.bn5 = BatchNormalization()
+        self.relu = ReLU()
+        self.add = Add()
+
+    def build(self, input_shape) -> None:
+        batch_size, width, height, channels = input_shape
+
+        self.dwconv1 = DepthwiseConv2D(
+            kernel_size=self.dwkernel,
+            strides=self.strides,
+            depth_multiplier=self.ratio - 1,
+            padding="same",
+            activation=None,
+            use_bias=False,
+            depthwise_initializer="he_uniform",
+            depthwise_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+        )
+
+        self.conv = Conv2D(
+            filters=self.out,
+            kernel_size=(1, 1),
+            strides=(1, 1),
+            padding="same",
+            activation=None,
+            use_bias=False,
+            kernel_initializer="he_uniform",
+            kernel_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+        )
+
+        self.ghost1 = GhostModule(
+            out=self.exp,
+            ratio=self.ratio,
+            convkernel=(1, 1),
+            dwkernel=(3, 3),
+        )
+
+        self.dwconv2 = DepthwiseConv2D(
+            kernel_size=self.dwkernel,
+            strides=self.strides,
+            padding="same",
+            depth_multiplier=self.ratio - 1,
+            activation=None,
+            use_bias=False,
+            depthwise_initializer="he_uniform",
+            depthwise_regularizer=tf.keras.regularizers.l2(l2=self.l2_regul),
+        )
+
+        self.se = SqueezeAndExcite(
+            filters=self.exp,
+            ratio=self.ratio,
+        )
+
+        self.ghost2 = GhostModule(
+            out=self.out, ratio=self.ratio, convkernel=(1, 1), dwkernel=(3, 3)
+        )
+
+    def call(self, inputs, training=None) -> tf.Tensor:
+        if self.strides > 1:
+            pass
+        if self.use_se:
+            pass
+
+    def get_config(self) -> Dict[str, Any]:
+        config = super().get_config()
+        config.update(
+            {
+                "dwkernel": self.dwkernel,
+                "strides": self.strides,
+                "exp": self.exp,
+                "out": self.out,
+                "ratio": self.ratio,
+                "use_se": self.use_se,
+                "name": self.name,
+                "l2_regul": self.l2_regul,
+            },
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
 
 
 def ghost_bottleneck_module(

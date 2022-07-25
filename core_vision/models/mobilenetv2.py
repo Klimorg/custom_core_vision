@@ -1,8 +1,7 @@
-from typing import List, Tuple
+from typing import List
 
 import tensorflow as tf
-from loguru import logger
-from tensorflow.keras import Model, backend
+from tensorflow.keras import Model
 from tensorflow.keras.layers import (
     Add,
     BatchNormalization,
@@ -13,75 +12,6 @@ from tensorflow.keras.layers import (
 )
 
 from core_vision.layers.common_layers import InvertedResidualBottleneck2D
-
-# def inverted_residual_bottleneck(
-#     fmap: tf.Tensor,
-#     filters: int,
-#     expansion_factor: int,
-#     strides: Tuple[int, int],
-#     skip_connection: bool,
-#     name: str,
-# ) -> tf.Tensor:
-#     """Inverted Residual Bottleneck, the backbone of the GhostNet model.
-
-#     Architecture:
-#         ![Architecture](./images/inv_residual_bottleneck.svg)
-
-#     Args:
-#         fmap (tf.Tensor): Input feature map of the module, size = $(H,W,C)$.
-#         filters (int): Number of filters used in the second `Conv2D` layer.
-#         expansion_factor (int): Integer by which multiply the number of channels $C$ of the
-#             input feature map to define the number of filters in the first `Conv2D`.
-#         strides (Tuple[int, int]): Stride parameter of the `DepthwiseConv2D` layers, used
-#             to downsample.
-#         skip_connection (bool): Determine wheter or not add a skip connection to the module.
-#         name (str): Name of the module.
-
-#     Returns:
-#         Output feature map.
-#     """
-
-#     in_channels = backend.int_shape(fmap)[-1]
-
-#     img = Conv2D(
-#         filters=expansion_factor * in_channels,
-#         kernel_size=(1, 1),
-#         strides=(1, 1),
-#         padding="same",
-#         kernel_initializer="he_normal",
-#         use_bias=False,
-#         name=f"conv1_{name}",
-#     )(fmap)
-#     img = BatchNormalization(name=f"bn1_{name}")(img)
-#     img = ReLU(max_value=6, name=f"relu1_{name}")(img)
-
-#     img = DepthwiseConv2D(
-#         kernel_size=(3, 3),
-#         strides=strides,
-#         padding="same",
-#         depth_multiplier=1,
-#         depthwise_initializer="he_normal",
-#         use_bias=False,
-#         name=f"depthconv1_{name}",
-#     )(img)
-#     img = BatchNormalization(name=f"bn2_{name}")(img)
-#     img = ReLU(max_value=6, name=f"relu2_{name}")(img)
-
-#     img = Conv2D(
-#         filters=filters,
-#         kernel_size=(1, 1),
-#         strides=(1, 1),
-#         padding="same",
-#         kernel_initializer="he_normal",
-#         use_bias=False,
-#         name=f"conv2_{name}",
-#     )(img)
-#     img = BatchNormalization(name=f"bn3_{name}")(img)
-
-#     if skip_connection:
-#         img = Add(name=f"skip_connection_{name}")([img, fmap])
-
-#     return img
 
 
 def get_feature_extractor(
@@ -274,26 +204,8 @@ def get_backbone(img_shape: List[int], backbone_name: str) -> tf.keras.Model:
         backbone.get_layer(layer_name).output for layer_name in endpoint_layers
     ]
 
-    height = img_shape[1]
-    logger.info(f"os4_output OS : {int(height/os4_output.shape.as_list()[1])}")
-    logger.info(f"os8_output OS : {int(height/os8_output.shape.as_list()[1])}")
-    logger.info(f"os16_output OS : {int(height/os16_output.shape.as_list()[1])}")
-    logger.info(f"os32_output OS : {int(height/os32_output.shape.as_list()[1])}")
-
     return Model(
         inputs=[backbone.input],
         outputs=[os4_output, os8_output, os16_output, os32_output],
         name=backbone_name,
     )
-
-
-if __name__ == "__main__":
-
-    import numpy as np
-
-    fmap = np.random.rand(1, 256, 256, 3)
-
-    model = get_feature_extractor(
-        img_shape=(256, 256, 3),
-    )
-    model.summary()
