@@ -10,6 +10,11 @@ class TFModel(ABC):
     def get_classification_backbone(
         self,
     ) -> Model:
+        """Instantiate the model and use it as a backbone (feature extractor) for a classification task.
+
+        Returns:
+            A `tf.keras` model.
+        """
         pass
 
     @abstractmethod

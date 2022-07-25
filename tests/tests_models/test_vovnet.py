@@ -57,7 +57,7 @@ class TestConvNeXt(BaseModel):
             block_repetitions=block_repetitions,
             name=name,
         )
-        return super().test_model_constructor(model)
+        super().test_model_constructor(model)
 
     def test_classification_backbone(
         self,
@@ -98,4 +98,4 @@ class TestConvNeXt(BaseModel):
         )
 
         backbone = model.get_segmentation_backbone()
-        return super().test_segmentation_backbone(fmap, backbone)
+        super().test_segmentation_backbone(fmap, backbone)
