@@ -53,7 +53,7 @@ jobs:
               run: |
                   python -m pip install -e ".[docs]" --no-cache-dir
             - name: Deploy documentation
-              run: cd stack_prod && mkdocs gh-deploy --force
+              run: mkdocs gh-deploy --force
 
   # - name: Run test suite
   #   run: |
