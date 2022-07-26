@@ -255,8 +255,8 @@ class CustomAttention(tf.keras.layers.Layer):
         self.attn_reduction_ratio = attn_reduction_ratio
         self.l2_regul = l2_regul
 
-        self.head_dims = units / num_heads
-        self.scale = 1 / tf.sqrt(self.head_dims)
+        self.head_dims = units // num_heads
+        self.scale = 1 / tf.sqrt(float(self.head_dims))
 
         self.softmax = tf.keras.activations.softmax
 
@@ -270,16 +270,25 @@ class CustomAttention(tf.keras.layers.Layer):
         reduction_height = height // self.attn_reduction_ratio
         reduction_width = width // self.attn_reduction_ratio
 
-        self.heads_reshape = Reshape(target_shape=(tensors, self.num_heads, -1))
-        self.square_reshape = Reshape(target_shape=(height, width, -1))
-        self.wide_reshape = Reshape(target_shape=(tensors, -1))
-        self.wide_reduction_reshape = Reshape(
-            target_shape=(reduction_height * reduction_width, -1),
+        self.heads_reshape = Rearrange(
+            "batch units (head_dims num_heads) -> batch units num_heads head_dims",
+            head_dims=self.head_dims,
+            num_heads=self.num_heads,
         )
-        self.kv_reshape = Reshape(
-            target_shape=(-1, 2, self.num_heads, int(self.head_dims)),
+        self.permute = Rearrange(
+            "batch units num_heads head_dims -> batch num_heads units head_dims",
         )
-        self.permute = Permute((2, 1, 3))
+
+        self.square_reshape = Rearrange("b (h w) c -> b h w c", h=height, w=width)
+
+        self.wide_reshape = Rearrange("b h w c -> b (h w) c")
+
+        self.kv_reshape = Rearrange(
+            "batch units (f num_heads head_dims) -> batch units f num_heads head_dims",
+            f=2,
+            num_heads=self.num_heads,
+            head_dims=self.head_dims,
+        )
 
         self.query = Dense(
             self.units,
@@ -314,16 +323,17 @@ class CustomAttention(tf.keras.layers.Layer):
             self.norm = LayerNormalization()
 
     def call(self, inputs, training=None) -> tf.Tensor:
+        fmap = inputs
+
         queries = self.query(inputs)
 
         queries = self.heads_reshape(queries)
         queries = self.permute(queries)
 
-        fmap = inputs
         if self.attn_reduction_ratio > 1:
             fmap = self.square_reshape(fmap)
             fmap = self.attn_conv(fmap)
-            fmap = self.wide_reduction_reshape(fmap)
+            fmap = self.wide_reshape(fmap)
             fmap = self.norm(fmap)
 
         fmap = self.key_value(fmap)
@@ -461,8 +471,7 @@ class SquareReshape(tf.keras.layers.Layer):
         return self.square_reshape(inputs)
 
     def get_config(self) -> Dict[str, Any]:
-        config = super().get_config()
-        return config
+        return super().get_config()
 
     @classmethod
     def from_config(cls, config):

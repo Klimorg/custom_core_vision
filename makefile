@@ -56,7 +56,7 @@ docs:
 # Tests
 .PHONY: tests
 tests:
-	python -m pytest -v --cov
+	python -m pytest -v --cov log_cli=true
 # Reporting
 .PHONY: mypy
 mypy:

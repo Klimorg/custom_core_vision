@@ -54,7 +54,3 @@ jobs:
                   python -m pip install -e ".[doc]" --no-cache-dir
             - name: Deploy documentation
               run: mkdocs gh-deploy --force
-
-  # - name: Run test suite
-  #   run: |
-  #     python -m pytest -v

@@ -83,6 +83,25 @@ class TestMlp(BaseLayer):
         super().test_config(layer)
 
 
+class TestCustomAttention(BaseLayer):
+    def test_layer_constructor(self):
+
+        layer = CustomAttention(units=64)
+        super().test_layer_constructor(layer)
+
+    def test_layer(self, fmap2):
+        layer = CustomAttention(units=64)
+
+        out = layer(fmap2)
+
+        assert out.shape.as_list() == [1, 25088, 64]
+
+    def test_config(self):
+        layer = CustomAttention(units=64)
+
+        super().test_config(layer)
+
+
 # @pytest.mark.parametrize(
 #     "channels, n_conv_blocks, num_blocks, units, mlp_ratios, name",
 #     [
