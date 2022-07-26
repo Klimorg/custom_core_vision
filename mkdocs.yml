@@ -1,0 +1,89 @@
+---
+site_name: Core Vision
+site_author: Mathieu Klimczak
+repo_url: https://github.com/Klimorg/custom_core_vision
+theme:
+    name: material
+    logo: images/logo_blanc.svg
+    language: fr
+    features:
+        - navigation.instant
+        - navigation.tabs
+        - navigation.top
+        - navigation.tabs.sticky
+        - content.code.annotate
+    palette:
+        - scheme: default
+          primary: indigo
+          accent: indigo
+          toggle:
+              icon: material/toggle-switch-off-outline
+              name: Basculer en mode sombre
+        - scheme: slate
+          primary: teal
+          accent: deep orange
+          toggle:
+              icon: material/toggle-switch
+              name: Basculer en mode clair
+    font:
+        text: Roboto
+        code: JetBrains Mono Medium
+
+plugins:
+    - search:
+          lang: fr
+    - mkdocstrings:
+        default_handler: python
+        handlers:
+          python:
+            setup_commands:
+              - import sys
+              - sys.path.append("core_vision")
+            rendering:
+              show_source: true
+  # - neoteroi.mkdocsoad:
+  #     use_pymdownx: true
+
+extra_css:
+    - stylesheets/extra.css
+    - stylesheets/mkdocsoad.css
+
+markdown_extensions:
+    - pymdownx.highlight:
+          linenums: true
+          anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.superfences:
+          custom_fences:
+              - name: mermaid
+                class: mermaid
+                format: !!python/name:pymdownx.superfences.fence_code_format ''
+    - pymdownx.snippets
+    - pymdownx.tabbed:
+          alternate_style: true
+    - admonition
+    - codehilite
+    - pymdownx.details
+    - def_list
+    - attr_list
+    - md_in_html
+    - meta
+    - pymdownx.betterem:
+          smart_enable: all
+  # config pour latex
+    - pymdownx.arithmatex:
+          generic: true
+    - pymdownx.emoji:
+          emoji_index: !!python/name:materialx.emoji.twemoji ''
+          emoji_generator: !!python/name:materialx.emoji.to_svg ''
+
+# config pour latex
+extra_javascript:
+    - javascripts/config.js
+    - https://polyfill.io/v3/polyfill.min.js?features=es6
+    - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+    - Accueil: index.md
+    - Backbones:
+        - VoVnet: models/vovnet.md

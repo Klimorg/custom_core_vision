@@ -61,128 +61,53 @@ class TestGhostModule(BaseLayer):
         super().test_config(layer)
 
 
+@pytest.mark.parametrize(
+    "strides, use_se",
+    [
+        (1, False),
+        (1, True),
+        (2, False),
+        (2, True),
+    ],
+)
 class TestGhostBottleneckModule(BaseLayer):
-    def test_layer_constructor(
-        self,
-    ):
-        layer1 = GhostBottleneckModule(
+    def test_layer_constructor(self, strides, use_se):
+        layer = GhostBottleneckModule(
             dwkernel=3,
-            strides=1,
+            strides=strides,
             exp=16,
             out=16,
             ratio=2,
-            use_se=False,
-        )
-        layer2 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=2,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=False,
-        )
-        layer3 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=1,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=True,
-        )
-        layer4 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=2,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=True,
-        )
-        super().test_layer_constructor(layer1)
-        super().test_layer_constructor(layer2)
-        super().test_layer_constructor(layer3)
-        super().test_layer_constructor(layer4)
-
-    def test_layer(self, fmap):
-        layer1 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=1,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=False,
-        )
-        layer2 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=2,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=False,
-        )
-        layer3 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=1,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=True,
-        )
-        layer4 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=2,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=True,
+            use_se=use_se,
         )
 
-        out1 = layer1(fmap)
-        out2 = layer2(fmap)
-        out3 = layer3(fmap)
-        out4 = layer4(fmap)
+        super().test_layer_constructor(layer)
 
-        assert out1.shape.as_list() == [1, 224, 224, 16]
-        assert out2.shape.as_list() == [1, 112, 112, 16]
-        assert out3.shape.as_list() == [1, 224, 224, 16]
-        assert out4.shape.as_list() == [1, 112, 112, 16]
+    def test_layer(self, fmap, strides, use_se):
+        layer = GhostBottleneckModule(
+            dwkernel=3,
+            strides=strides,
+            exp=16,
+            out=16,
+            ratio=2,
+            use_se=use_se,
+        )
 
-    def test_config(self):
-        layer1 = GhostBottleneckModule(
+        out = layer(fmap)
+
+        assert out.shape.as_list() == [1, 224 // strides, 224 // strides, 16]
+
+    def test_config(self, strides, use_se):
+        layer = GhostBottleneckModule(
             dwkernel=3,
-            strides=1,
+            strides=strides,
             exp=16,
             out=16,
             ratio=2,
-            use_se=False,
+            use_se=use_se,
         )
-        layer2 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=2,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=False,
-        )
-        layer3 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=1,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=True,
-        )
-        layer4 = GhostBottleneckModule(
-            dwkernel=3,
-            strides=2,
-            exp=16,
-            out=16,
-            ratio=2,
-            use_se=True,
-        )
-        super().test_config(layer1)
-        super().test_config(layer2)
-        super().test_config(layer3)
-        super().test_config(layer4)
+
+        super().test_config(layer)
 
 
 class TestGhostNet(BaseModel):

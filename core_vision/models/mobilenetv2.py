@@ -2,14 +2,7 @@ from typing import List
 
 import tensorflow as tf
 from tensorflow.keras import Model
-from tensorflow.keras.layers import (
-    Add,
-    BatchNormalization,
-    Conv2D,
-    DepthwiseConv2D,
-    Input,
-    ReLU,
-)
+from tensorflow.keras.layers import Conv2D, Input
 
 from core_vision.layers.common_layers import InvertedResidualBottleneck2D
 

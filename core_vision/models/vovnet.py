@@ -10,6 +10,12 @@ from core_vision.models.utils import TFModel
 
 @tf.keras.utils.register_keras_serializable()
 class OSAModule(Layer):
+    """_summary_
+
+    Inheritance:
+        tf.keras.layers.Layer:
+    """
+
     def __init__(
         self,
         filters_conv3x3: int,
@@ -17,6 +23,15 @@ class OSAModule(Layer):
         *args,
         **kwargs,
     ) -> None:
+        """_summary_
+
+        Args:
+            filters_conv3x3 (int): _description_
+            filters_conv1x1 (int): _description_
+
+        Info:
+            Input[B, H, W, C_1] --> Output[B, H, W, C_2] where C_2 = `filters_conv1x1`
+        """
         super().__init__(*args, **kwargs)
         self.filters_conv3x3 = filters_conv3x3
         self.filters_conv1x1 = filters_conv1x1
@@ -51,6 +66,15 @@ class OSAModule(Layer):
         )
 
     def call(self, inputs: tf.Tensor, training=None) -> tf.Tensor:
+        """_summary_
+
+        Args:
+            inputs (tf.Tensor): _description_
+            training (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            tf.Tensor: _description_
+        """
         fmap1 = self.conv1(inputs)
         fmap2 = self.conv2(inputs)
         fmap3 = self.conv3(inputs)
@@ -62,6 +86,11 @@ class OSAModule(Layer):
         return self.conv6(fmap)
 
     def get_config(self) -> Dict[str, Any]:
+        """_summary_
+
+        Returns:
+            Dict[str, Any]: _description_
+        """
         config = super().get_config()
         config.update(
             {
@@ -73,6 +102,14 @@ class OSAModule(Layer):
 
     @classmethod
     def from_config(cls, config):
+        """_summary_
+
+        Args:
+            config (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         return cls(**config)
 
 
@@ -85,6 +122,15 @@ class VoVNet(TFModel):
         block_repetitions: List[int],
         name: str,
     ) -> None:
+        """_summary_
+
+        Args:
+            img_shape (List[int]): _description_
+            filters_conv3x3 (List[int]): _description_
+            filters_conv1x1 (List[int]): _description_
+            block_repetitions (List[int]): _description_
+            name (str): _description_
+        """
 
         self.img_shape = img_shape
         self.filters_conv3x3 = filters_conv3x3
@@ -100,6 +146,11 @@ class VoVNet(TFModel):
         ]
 
     def get_classification_backbone(self) -> Model:
+        """_summary_
+
+        Returns:
+            Model: _description_
+        """
 
         block1 = [
             OSAModule(

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
 
 from tensorflow.keras.layers import Layer
 from tensorflow.keras.models import Model
