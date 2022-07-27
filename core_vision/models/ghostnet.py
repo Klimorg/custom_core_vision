@@ -2,7 +2,6 @@ from typing import Any, Dict, List
 
 import numpy as np
 import tensorflow as tf
-from loguru import logger
 from tensorflow.keras.layers import (
     Activation,
     Add,
@@ -292,15 +291,15 @@ class GhostBottleneckModule(Layer):
         self.ghost1 = GhostModule(
             out=self.exp,
             ratio=self.ratio,
-            convkernel=(1, 1),
-            dwkernel=(3, 3),
+            convkernel=1,
+            dwkernel=3,
         )
 
         self.ghost2 = GhostModule(
             out=self.out,
             ratio=self.ratio,
-            convkernel=(1, 1),
-            dwkernel=(3, 3),
+            convkernel=1,
+            dwkernel=3,
         )
 
         self.se = SqueezeAndExcite(
