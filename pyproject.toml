@@ -30,7 +30,7 @@ dev=[
     "pipreqs~=0.4.11",
     "pre-commit~=2.20.0",
     "radon~=5.1.0",
-    "rope~=1.2.0",
+    "rope~=1.7.0",
     "wemake-python-styleguide~=0.16.1",
     "flit~=3.7.1",
 ]
